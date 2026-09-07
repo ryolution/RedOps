@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "kind": "synthetic",
+  "updated_at": "2026-09-07T00:00:00Z",
+  "records": [
+    {
+      "id": "DEMO-WEB-001",
+      "cpes": [
+        "cpe:2.3:a:redops_demo:sample_web:1.0:*:*:*:*:*:*:*"
+      ],
+      "cvss": 7.5,
+      "description": "Fictional web-service finding used to demonstrate evidence review.",
+      "remediation": "For this fictional product, review the simulated update advisory and record the installed version.",
+      "source": "https://example.invalid/redops/demo-web"
+    },
+    {
+      "id": "DEMO-DB-001",
+      "cpes": [
+        "cpe:2.3:a:redops_demo:sample_db:2.0:*:*:*:*:*:*:*"
+      ],
+      "cvss": 5.3,
+      "description": "Fictional database-service finding used to demonstrate prioritization.",
+      "remediation": "For this fictional product, review the simulated configuration guidance.",
+      "source": "https://example.invalid/redops/demo-db"
+    }
+  ]
+}

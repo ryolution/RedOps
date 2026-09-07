@@ -1,0 +1,8 @@
+# Applies only to synthetic documentation-address fixtures; no real authorization.
+engagement: synthetic-portfolio-demo
+operator: demo-operator
+authorized_by: synthetic-fixture-owner
+expires_at: '2099-01-01T00:00:00Z'
+allowlist:
+  - 192.0.2.0/24
+max_hosts: 12

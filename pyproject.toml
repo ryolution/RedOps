@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "redops-toolkit"
+version = "0.1.0"
+description = "Scoped inventory and evidence-based vulnerability assessment"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "SQLAlchemy>=2.0.36,<2.1",
+    "PyYAML>=6.0.2,<7",
+    "defusedxml>=0.7.1,<0.8",
+    "msgpack>=1.1,<2",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2,<4"]
+dev = ["pytest>=8.3,<10", "ruff>=0.11,<1", "build>=1.2,<2"]
+
+[project.scripts]
+redops = "redops.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["redops*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

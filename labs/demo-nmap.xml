@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<!-- Authored synthetic data; no scans were performed. -->
+<nmaprun scanner="synthetic-fixture" version="demo">
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.10" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-01" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="1.0">
+          <cpe>cpe:/a:redops_demo:sample_web:1.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.11" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-02" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="1.0">
+          <cpe>cpe:/a:redops_demo:sample_web:1.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.12" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-03" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="1.0">
+          <cpe>cpe:/a:redops_demo:sample_web:1.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.13" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-04" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="1.0">
+          <cpe>cpe:/a:redops_demo:sample_web:1.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.14" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-05" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="5432">
+        <state state="open" />
+        <service name="demo-db" product="RedOps Demo sample_db" version="2.0">
+          <cpe>cpe:/a:redops_demo:sample_db:2.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.15" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-06" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="5432">
+        <state state="open" />
+        <service name="demo-db" product="RedOps Demo sample_db" version="2.0">
+          <cpe>cpe:/a:redops_demo:sample_db:2.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.16" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-07" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="5432">
+        <state state="open" />
+        <service name="demo-db" product="RedOps Demo sample_db" version="2.0">
+          <cpe>cpe:/a:redops_demo:sample_db:2.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.17" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-08" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="5432">
+        <state state="open" />
+        <service name="demo-db" product="RedOps Demo sample_db" version="2.0">
+          <cpe>cpe:/a:redops_demo:sample_db:2.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.18" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-09" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="2.0">
+          <cpe>cpe:/a:redops_demo:sample_web:2.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.19" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-10" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="2.0">
+          <cpe>cpe:/a:redops_demo:sample_web:2.0</cpe>
+        </service>
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.20" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-11" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="1.0" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" />
+    <address addr="192.0.2.21" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="demo-12" type="user" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" />
+        <service name="http" product="RedOps Demo sample_web" version="1.0" />
+      </port>
+    </ports>
+  </host>
+</nmaprun>

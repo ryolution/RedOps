@@ -1,0 +1,26 @@
+services:
+  redops:
+    build: .
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    volumes:
+      - redops-data:/data
+      - redops-reports:/reports
+    command:
+      - workflow
+      - run
+      - --scope
+      - labs/demo-scope.yaml
+      - --input
+      - labs/demo-nmap.xml
+      - --catalog
+      - labs/demo-catalog.json
+      - --output-dir
+      - /reports
+
+volumes:
+  redops-data:
+  redops-reports:
