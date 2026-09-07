@@ -5,7 +5,8 @@ Offensive Automation Toolkit
 RedOps provides scoped inventory and vulnerability evidence
 assessment for a local operator. It imports existing Nmap XML, correlates exact
 versioned CPEs against reviewed local evidence, stores assessment history using
-SQLAlchemy, and exports JSON and self-contained HTML reports.
+SQLAlchemy, and exports JSON and self-contained HTML reports. NVD advisory lookup
+includes an offline cache and explicit mock providers for integration testing.
 
 ```bash
 python3 -m venv .venv
@@ -23,7 +24,7 @@ The demonstration contains 12 synthetic hosts and fictional findings. No live
 scan, exploitation, or measured time-reduction claim is included. Findings remain
 candidates requiring human review. Metasploit integration is a separate verified-TLS
 version health check; exploit/payload preparation and execution are outside this
-implementation. NVD synchronization, a web API, and automated PDF export are not
+implementation. A web API and automated PDF export are not
 implemented.
 
 Run `pytest`, `ruff check .`, and `ruff format --check .` for development checks.

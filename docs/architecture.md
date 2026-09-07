@@ -1,6 +1,6 @@
 # RedOps architecture
 
-Status: initial implementation, September 2026.
+Implementation reference, September 2026.
 
 The supplied project brief is reference material. This implementation takes its
 modular Python structure, inventory, vulnerability intelligence, audit, reporting,
@@ -28,7 +28,7 @@ flowchart TD
 | `redops/cli` | Argument parsing, commands, safe error messages |
 | `redops/core` | Domain records, input limits, configuration, scope, audit, orchestration |
 | `redops/recon` | Import existing Nmap XML; normalize addresses and open services |
-| `redops/intelligence` | Validate local evidence catalogs; conservative CPE correlation |
+| `redops/intelligence` | Local evidence, exact CPE correlation, NVD advisory providers and cache |
 | `redops/database` | Typed SQLAlchemy models, atomic assessment persistence, inventory |
 | `redops/metasploit` | Authenticated version health check with verified TLS |
 | `redops/reporting` | JSON, self-contained HTML, measured benchmark calculations |
@@ -48,9 +48,12 @@ are reported as coverage gaps. Catalog data is explicitly supplied by the operat
 there is no implicit online lookup or product-name guessing.
 
 Synthetic examples use `DEMO-*` identifiers and cannot be mistaken for real CVEs.
-Real catalog records may use `CVE-YYYY-NNNN...` identifiers. NVD API ingestion is a
-future adapter; it needs pagination, cache provenance, rate limits, CVSS precedence,
-and configuration-tree evaluation before it can replace reviewed local evidence.
+Real catalog records may use `CVE-YYYY-NNNN...` identifiers. NVD lookup requests
+one exact CVE at a time and validates the response identifier and result count.
+Verified TLS, timeouts, bounded retries, request pacing, CVSS precedence, and a
+24-hour cache are implemented. Explicit workflow enrichment attaches advisory
+context separately; it does not change the catalog's applicability evidence or
+scores. NVD configuration trees are not flattened into affected-product claims.
 
 ## Persistence
 
@@ -92,7 +95,7 @@ come from the environment; TLS verification is mandatory and redirects are refus
 6. Regression tests, packaging, CI, Docker, installation documentation.
 
 Future defensive work includes an authenticated API, reviewed schema migrations,
-NVD synchronization, and PDF rendering. A distributed job queue is unnecessary for
+and PDF rendering. A distributed job queue is unnecessary for
 the current bounded local workflow.
 
 ## Reference contracts

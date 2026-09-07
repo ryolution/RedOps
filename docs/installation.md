@@ -55,6 +55,8 @@ specify `--assessment UUID` when working with multiple engagements.
 | `REDOPS_MSF_USERNAME` | Required only for the health check |
 | `REDOPS_MSF_PASSWORD` | Required only for the health check; supply through your secret store |
 | `REDOPS_MSF_CA_FILE` | Optional trusted CA bundle for the health service |
+| `REDOPS_NVD_API_KEY` | Optional NVD API key, sent only in the HTTPS request header |
+| `REDOPS_NVD_CACHE` | `data/nvd-cache`; validated advisory cache |
 
 Global `--database` and `--audit` flags precede the subcommand. Environment
 configuration is preferred for database URLs containing credentials. Protect the
@@ -88,8 +90,27 @@ after binding normalization, including remaining CPE attributes. Product names,
 service banners, and open ports alone do not create findings. Validate applicability,
 distribution backports, runtime configuration, and catalog freshness during review.
 
-An NVD fetcher is not yet implemented. Operators must supply reviewed local
-evidence. There is no implicit online intelligence request.
+NVD provides advisory context for existing CVEs. It does not replace the reviewed
+local evidence needed to establish candidate applicability.
+
+```bash
+redops intelligence lookup --cve CVE-2021-44228
+redops intelligence lookup --cve CVE-2021-44228 --offline
+redops intelligence lookup --cve CVE-2099-0001 --mock
+```
+
+The mock identifier and response are fictional and marked `provider: mock`.
+Live records are cached for 24 hours; offline cache misses and expiry fail
+explicitly. Mock records cannot enter the live cache. Requests use verified TLS,
+15-second timeouts, a 4 MiB response limit, six-second pacing per transport
+instance, and at most three attempts for HTTP 429/500/502/503/504. Separate
+processes must coordinate their API usage externally. Redirects are refused.
+
+Add `--nvd online` or `--nvd offline` to a workflow using a reviewed catalog to
+attach distinct CVE advisories to the report. `--cache DIRECTORY` overrides the
+cache location. Enrichment preserves catalog-derived finding scores and stores
+NVD scores, provider, and retrieval timestamps separately. Dry-run rejects `--nvd`;
+it only uses the local catalog. Unknown or unavailable scores remain unknown.
 
 ## Metasploit health integration
 
@@ -97,6 +118,7 @@ After configuring credentials and a trusted TLS endpoint, run:
 
 ```bash
 redops metasploit status
+redops metasploit status --mock
 ```
 
 The adapter uses the [Rapid7 MessagePack RPC contract](https://docs.rapid7.com/metasploit/rpc-api/)
@@ -105,6 +127,11 @@ are returned. Requests time out after 10 seconds, responses are bounded, and
 redirects are refused. Self-signed certificates require a trusted CA file; there
 is no option to disable verification. No live RPC server is bundled or required
 for the offline assessment.
+
+`AdvisoryProvider`, `NvdTransport`, `InventoryParser`, and `HealthProvider` expose
+typed contracts. `MockAdvisoryProvider`, `MockInventoryParser`, and
+`MockMetasploitClient` provide explicit offline implementations for tests and
+demonstrations. The Nmap adapter parses real Nmap XML; it does not launch scans.
 
 ## Container demonstration
 

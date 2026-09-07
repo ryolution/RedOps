@@ -58,6 +58,20 @@ def render_html(document: dict[str, Any]) -> str:
         "This does not establish that the services are secure.</p>"
     )
     warnings = "".join(f"<li>{text(value)}</li>" for value in document["warnings"])
+    advisories = "".join(
+        '<article class="finding">'
+        f"<h3>{text(item['cve_id'])}</h3><p>{text(item['description'])}</p>"
+        f"<p>Advisory status: {text(item['status'])} · CVSS {text(item['cvss'])} "
+        f"({text(item['cvss_version'])})</p>"
+        f"<p>Provider: {text(item['provider'])} · Retrieved: {text(item['retrieved_at'])}</p>"
+        "</article>"
+        for item in document.get("advisories", [])
+    )
+    if advisories:
+        advisories = (
+            "<h2>NVD advisory context</h2><p>Advisory metadata does not confirm applicability. "
+            "Candidate scores above remain those supplied in the reviewed catalog.</p>" + advisories
+        )
     coverage = document["coverage"]
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
@@ -92,7 +106,7 @@ footer {{ font-size: .8rem; overflow-wrap: anywhere; color: #526172; margin-top:
 <h2>Service inventory</h2><div class="table-scroll"><table>
 <thead><tr><th>IP</th><th>Hostname</th><th>Port</th><th>Protocol</th><th>Service</th>
 <th>Product</th><th>Version</th></tr></thead><tbody>{inventory}</tbody></table></div>
-<h2>Evidence and remediation</h2>{findings}
+<h2>Evidence and remediation</h2>{findings}{advisories}
 <footer>Assessment: {text(document["id"])}<br>
 Nmap SHA-256: {text(document["provenance"]["nmap_sha256"])}<br>
 Catalog SHA-256: {text(document["provenance"]["catalog_sha256"])}<br>

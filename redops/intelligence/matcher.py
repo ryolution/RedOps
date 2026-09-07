@@ -1,6 +1,7 @@
 """Exact evidence correlation, without exploit or module selection."""
 
 from redops.core.domain import Finding, Host
+from redops.core.errors import InputError
 from redops.intelligence.cve import Catalog, canonical_cpe
 
 
@@ -28,6 +29,10 @@ def correlate(hosts: tuple[Host, ...], catalog: Catalog) -> tuple[list[Finding],
                     matches[record.identifier][1].append(cpe)
             coverage["services_with_candidates"] += bool(matches)
             for record, matched_cpes in matches.values():
+                if len(findings) >= 10000:
+                    raise InputError(
+                        "Candidate limit exceeded; narrow the input or evidence catalog."
+                    )
                 findings.append(
                     Finding(
                         host=host.ip,

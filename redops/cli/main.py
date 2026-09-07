@@ -3,6 +3,7 @@
 import argparse
 import getpass
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -14,6 +15,9 @@ from redops.core.errors import RedOpsError
 from redops.core.io import require_distinct_paths
 from redops.core.workflow import run_assessment
 from redops.database.repository import Repository
+from redops.intelligence.advisories import AdvisoryProvider, MockAdvisoryProvider
+from redops.intelligence.nvd import CachedAdvisoryProvider, NvdClient
+from redops.metasploit.health import HealthProvider, MockMetasploitClient
 from redops.metasploit.rpc import MetasploitClient
 from redops.reporting.benchmark import calculate_benchmark
 from redops.reporting.render import export_report
@@ -47,8 +51,30 @@ def parser() -> argparse.ArgumentParser:
             "--dry-run", action="store_true", help="Preview; only audit events are written"
         )
         command.add_argument("--output-dir", type=Path, help="Export JSON and HTML after saving")
+        command.add_argument(
+            "--nvd", choices=["online", "offline"], help="Attach NVD advisories to candidates"
+        )
+        command.add_argument(
+            "--cache", type=Path, default=Path(os.environ.get("REDOPS_NVD_CACHE", "data/nvd-cache"))
+        )
     metasploit = commands.add_parser("metasploit", help="Separate integration health check")
-    metasploit.add_subparsers(dest="msf_command", required=True).add_parser("status")
+    status = metasploit.add_subparsers(dest="msf_command", required=True).add_parser("status")
+    status.add_argument(
+        "--mock", action="store_true", help="Use an explicitly marked offline fixture"
+    )
+    intelligence = commands.add_parser("intelligence", help="CVE advisory lookup")
+    lookup = intelligence.add_subparsers(dest="intelligence_command", required=True).add_parser(
+        "lookup"
+    )
+    lookup.add_argument("--cve", required=True)
+    sources = lookup.add_mutually_exclusive_group()
+    sources.add_argument("--mock", action="store_true")
+    sources.add_argument(
+        "--offline", action="store_true", help="Require a fresh cache record; never use the network"
+    )
+    lookup.add_argument(
+        "--cache", type=Path, default=Path(os.environ.get("REDOPS_NVD_CACHE", "data/nvd-cache"))
+    )
     benchmark = commands.add_parser(
         "benchmark", help="Calculate savings from supplied measurements"
     )
@@ -66,8 +92,22 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     if args.command in {"workflow", "analyze"}:
         if args.dry_run and args.output_dir:
             raise RedOpsError("--output-dir cannot be combined with --dry-run.")
+        if args.dry_run and args.nvd:
+            raise RedOpsError("--nvd cannot be combined with --dry-run.")
+        provider = None
+        if args.nvd:
+            provider = CachedAdvisoryProvider(
+                args.cache,
+                NvdClient() if args.nvd == "online" else None,
+                protected_paths=tuple([*protected_paths, args.scope, args.input, args.catalog]),
+            )
         document = run_assessment(
-            settings, args.scope, args.input, args.catalog, dry_run=args.dry_run
+            settings,
+            args.scope,
+            args.input,
+            args.catalog,
+            dry_run=args.dry_run,
+            advisory_provider=provider,
         )
         if args.output_dir:
             try:
@@ -87,8 +127,22 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     try:
         if args.command == "benchmark":
             result = calculate_benchmark(args.input)
+        elif args.command == "intelligence":
+            advisory_source: AdvisoryProvider = (
+                MockAdvisoryProvider()
+                if args.mock
+                else CachedAdvisoryProvider(
+                    args.cache,
+                    None if args.offline else NvdClient(),
+                    protected_paths=tuple(protected_paths),
+                )
+            )
+            result = advisory_source.lookup(args.cve).to_dict()
         elif args.command == "metasploit":
-            result = MetasploitClient.from_env().health()
+            health_source: HealthProvider = (
+                MockMetasploitClient() if args.mock else MetasploitClient.from_env()
+            )
+            result = health_source.health()
         else:
             repository = Repository(settings.database_url, create=args.command == "init")
             try:
