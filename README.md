@@ -1,0 +1,2 @@
+# RedOps
+Offensive Automation Toolkit
