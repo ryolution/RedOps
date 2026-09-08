@@ -74,8 +74,11 @@ Do not commit assessment data or secrets. Audit files use mode 0600 when created
 on platforms that enforce POSIX permissions; mounted Windows paths may differ.
 
 SQLite databases initialize automatically only after an assessment passes input
-validation. `redops init` explicitly initializes an empty database. Schema version
-mismatches require a reviewed migration; no automatic migration or deletion runs.
+validation. `redops init` explicitly initializes an empty database. Use
+`redops database status` to check compatibility and row counts. Backups, empty
+database restores, explicit schema upgrades, and retention previews are available
+through `redops database`; see [database maintenance](database.md). No automatic
+schema upgrade or deletion runs.
 
 For PostgreSQL, install `python -m pip install -e '.[postgres]'`, configure an
 existing database via `REDOPS_DATABASE_URL=postgresql+psycopg://...`, then run

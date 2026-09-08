@@ -17,6 +17,7 @@ from redops.database.models import (
     ServiceRecord,
     VulnerabilityRecord,
 )
+from redops.database.schema import CURRENT_SCHEMA, schema_version, transaction
 
 
 class Repository:
@@ -42,26 +43,19 @@ class Repository:
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
-    def initialize(self) -> None:
-        tables = set(inspect(self.engine).get_table_names())
-        if tables:
-            self._check_schema()
-            return
-        Base.metadata.create_all(self.engine)
-        with Session(self.engine) as session, session.begin():
-            session.add(SchemaVersion(id=1, version=1))
+    def initialize(self) -> int:
+        with transaction(self.engine, write=True) as connection:
+            if inspect(connection).get_table_names():
+                return schema_version(connection)
+            Base.metadata.create_all(connection)
+            connection.execute(
+                SchemaVersion.__table__.insert().values(id=1, version=CURRENT_SCHEMA)
+            )
+            return CURRENT_SCHEMA
 
     def _check_schema(self) -> None:
-        if not set(Base.metadata.tables).issubset(inspect(self.engine).get_table_names()):
-            raise RedOpsError(
-                "Database schema is missing or incompatible; an explicit migration is required."
-            )
-        with Session(self.engine) as session:
-            version = session.get(SchemaVersion, 1)
-            if version is None or version.version != 1:
-                raise RedOpsError(
-                    "Database schema version is incompatible; an explicit migration is required."
-                )
+        with self.engine.connect() as connection:
+            schema_version(connection)
 
     def save(self, document: dict[str, Any]) -> None:
         self._check_schema()

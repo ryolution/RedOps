@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import JSON, ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -20,6 +20,7 @@ class SchemaVersion(Base):
 
 class Assessment(Base):
     __tablename__ = "assessments"
+    __table_args__ = (Index("ix_assessments_engagement_history", "engagement", "created_at", "id"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     created_at: Mapped[str] = mapped_column(String(40), index=True)
     engagement: Mapped[str] = mapped_column(String(200), index=True)

@@ -3,15 +3,17 @@
 Validated locally on September 8, 2026, using Python 3.14.4 in `/tmp/redops-venv`
 and Python 3.13 in Docker.
 
-- 142 local pytest cases passed: input validation, scope expiry/allowlists, CPE evidence,
+- 165 local pytest cases passed: input validation, scope expiry/allowlists, CPE evidence,
   duplicate handling, SQL transaction rollback, report escaping, CLI workflows,
   dry-run side effects, path collision protection, benchmark arithmetic, and
   mocked MessagePack health requests, NVD response parsing, retry limits, cache
   expiry, provider injection, candidate limits, PDF contents, API authentication,
   pagination, storage failures, explicit offline behavior, scan planning, process
-  deadlines and cleanup, output collision races, and healthy lab HTTP routes. The dedicated
-  PostgreSQL pytest case skips locally unless `REDOPS_TEST_POSTGRES_URL` is set;
-  a separate live PostgreSQL check passed in Docker.
+  deadlines and cleanup, output collision races, healthy lab HTTP routes, portable
+  archives, concurrent-write snapshot consistency, migration rollback, restore
+  constraint failures, retention boundaries, and audit failure reporting. The two
+  PostgreSQL pytest cases skip locally unless `REDOPS_TEST_POSTGRES_URL` is set;
+  both passed against a disposable PostgreSQL 17 database in Docker.
 - Ruff lint and formatting checks passed.
 - All Python source and test files parsed with Python 3.11 grammar. This is a
   syntax check, not a Python 3.11 runtime test; CI defines the runtime matrix.
@@ -36,6 +38,13 @@ A temporary PostgreSQL 17 container on an internal network passed assessment
 persistence, inventory retrieval, and history listing. The temporary database and
 network were removed. Compose configuration validation also passed.
 
+The PostgreSQL maintenance check restored a SQLite archive, inserted a new
+assessment to verify serial sequences, upgraded a legacy schema, pruned an old
+assessment with a preceding archive, and restored a PostgreSQL archive into
+SQLite. Its temporary schema, database container, and internal network were
+removed after the test. The SQLite concurrency test inserted another assessment
+while a backup was being read and verified a consistent snapshot across tables.
+
 CI includes actual Python 3.11/3.13/3.14 tests, a dedicated PostgreSQL integration
 job, an isolated container workflow, and a running inventory lab check. A real
 unprivileged Nmap TCP connect scan against the twelve healthy lab containers
@@ -47,5 +56,6 @@ Live Metasploit RPC was not tested because no service or credentials were suppli
 its TLS policy, authentication sequence, logout, and error paths have mocked tests.
 There is no payload/exploit automation or measured 60% improvement
 claim. PDF displays non-ASCII text as Unicode escapes; JSON retains original text.
-Deployment TLS, access controls, backups, migrations, and retention require operator
-configuration.
+Deployment TLS, access controls, off-host backup storage, and retention schedules
+require operator configuration. Portable archives exclude the audit log and
+external files, and are limited to 64 MiB and 100,000 rows.

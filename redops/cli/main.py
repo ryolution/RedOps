@@ -15,6 +15,13 @@ from redops.core.config import Settings
 from redops.core.errors import RedOpsError
 from redops.core.io import require_distinct_paths
 from redops.core.workflow import run_assessment
+from redops.database.maintenance import (
+    backup_database,
+    database_status,
+    migrate_database,
+    prune_database,
+    restore_database,
+)
 from redops.database.repository import Repository
 from redops.intelligence.advisories import AdvisoryProvider, MockAdvisoryProvider
 from redops.intelligence.nvd import CachedAdvisoryProvider, NvdClient
@@ -36,7 +43,28 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument("--audit", type=Path, help="Audit JSONL path; defaults to REDOPS_AUDIT_PATH")
     root.add_argument("--verbose", action="store_true", help="Write operational logs to stderr")
     commands = root.add_subparsers(dest="command", required=True)
-    commands.add_parser("init", help="Initialize schema version 1 in a new database")
+    commands.add_parser("init", help="Initialize an empty database with the current schema")
+    database = commands.add_parser("database", help="Backup, restore, migration, and retention")
+    maintenance = database.add_subparsers(dest="database_command", required=True)
+    maintenance.add_parser("status", help="Check schema compatibility and row counts")
+    backup = maintenance.add_parser("backup", help="Save a consistent portable database archive")
+    backup.add_argument("--output", type=Path, required=True)
+    restore = maintenance.add_parser("restore", help="Restore into an empty database")
+    restore.add_argument("--input", type=Path, required=True)
+    migrate = maintenance.add_parser(
+        "migrate", help="Back up and apply the supported schema upgrade"
+    )
+    migrate.add_argument("--backup", type=Path, required=True)
+    prune = maintenance.add_parser(
+        "prune", help="Preview old assessment removal; explicit apply required"
+    )
+    prune.add_argument("--engagement", required=True)
+    prune.add_argument(
+        "--before", required=True, help="Exclusive ISO 8601 cutoff, including timezone"
+    )
+    prune.add_argument("--keep-latest", type=int, default=1)
+    prune.add_argument("--apply", action="store_true")
+    prune.add_argument("--backup", type=Path, help="New backup file; mandatory with --apply")
     scan = commands.add_parser("scan", help="Bounded TCP inventory of scoped private lab hosts")
     scan.add_argument("--scope", type=Path, required=True)
     targets = scan.add_mutually_exclusive_group(required=True)
@@ -111,6 +139,23 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     elif args.command == "benchmark":
         protected_paths.append(args.input)
     require_distinct_paths(protected_paths)
+    if args.command == "database":
+        if args.database_command == "status":
+            return database_status(settings)
+        if args.database_command == "backup":
+            return backup_database(settings, args.output)
+        if args.database_command == "restore":
+            return restore_database(settings, args.input)
+        if args.database_command == "migrate":
+            return migrate_database(settings, args.backup)
+        return prune_database(
+            settings,
+            engagement=args.engagement,
+            before=args.before,
+            keep_latest=args.keep_latest,
+            apply=args.apply,
+            backup=args.backup,
+        )
     if args.command == "scan":
         return scan_inventory(
             settings,
@@ -188,8 +233,8 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
             repository = Repository(settings.database_url, create=args.command == "init")
             try:
                 if args.command == "init":
-                    repository.initialize()
-                    result = {"status": "initialized", "schema_version": 1}
+                    version = repository.initialize()
+                    result = {"status": "initialized", "schema_version": version}
                 elif args.command == "inventory":
                     result = repository.inventory(args.assessment)
                 elif args.command == "assessments":

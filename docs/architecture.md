@@ -32,7 +32,7 @@ flowchart TD
 | `redops/core` | Domain records, input limits, configuration, scope, audit, orchestration |
 | `redops/recon` | Import Nmap XML; separately collect bounded TCP inventory in private labs |
 | `redops/intelligence` | Local evidence, exact CPE correlation, NVD advisory providers and cache |
-| `redops/database` | Typed SQLAlchemy models, atomic assessment persistence, inventory |
+| `redops/database` | Typed persistence, portable backups, restore, explicit migration, retention |
 | `redops/metasploit` | Authenticated version health check with verified TLS |
 | `redops/reporting` | JSON, self-contained HTML, PDF, measured benchmark calculations |
 | `labs` | Synthetic assessment fixtures and twelve healthy Docker inventory services |
@@ -76,8 +76,13 @@ and timestamps. `hosts`, `services`, and `vulnerabilities` preserve observations
 within each assessment. `actions` records committed workflow completion in the
 same transaction. Foreign keys and uniqueness constraints prevent orphaned or
 duplicate observations. SQLite is the default; a PostgreSQL SQLAlchemy URL and
-optional driver are supported. Schema version 1 is bootstrapped explicitly;
-version mismatches fail and require a reviewed migration.
+optional driver are supported. New databases use schema 2. Schema 1 remains
+compatible; an explicit, backed-up migration adds the engagement/history index.
+Unknown versions fail. Portable table archives use consistent snapshots and
+bounded JSON. Restore requires empty tables, preserves observation identifiers,
+and repairs PostgreSQL serial sequences. Retention previews engagement-specific
+changes and requires an archive before deleting related rows transactionally.
+See [database maintenance](database.md) for limits and operating procedures.
 
 JSONL audit events record attempts, validation failures, previews, and completion.
 They do not contain input document contents, credentials, or database URLs. The
@@ -111,8 +116,9 @@ come from the environment; TLS verification is mandatory and redirects are refus
 6. Regression tests, packaging, CI, Docker, installation documentation.
 
 The API reads stored snapshots. PDF rendering uses local built-in fonts and
-explicit Unicode escapes for unsupported characters. Schema changes still require
-reviewed migrations. A distributed job queue is unnecessary for the bounded workflow.
+explicit Unicode escapes for unsupported characters. Schema upgrades run only
+through the explicit maintenance command. A distributed job queue is unnecessary
+for the bounded workflow.
 
 ## Reference contracts
 

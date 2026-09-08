@@ -37,7 +37,7 @@ scope declaration, previously collected Nmap XML, and reviewed evidence catalog.
 | Core | Scope declarations, expiry checks, audit events, dry-run, bounded input |
 | Recon | Nmap XML import and bounded TCP inventory of scoped private lab hosts |
 | Intelligence | Evidence correlation, CVSS ranking, NVD lookup, retries, cache |
-| Database | Transactional SQLAlchemy observations, snapshots, SQLite/PostgreSQL |
+| Database | SQLite/PostgreSQL history, portable backup/restore, migration, retention |
 | Metasploit | Verified-TLS RPC health check and explicit offline mock |
 | Reporting | JSON, HTML, paginated PDF, measured benchmark calculations |
 | API | Bearer authentication, assessment listing, inventory, report downloads |
@@ -59,6 +59,7 @@ contacts external services or writes database/report files.
 - [Architecture and repository boundaries](docs/architecture.md)
 - [Installation, CLI, configuration, and deployment](docs/installation.md)
 - [Authenticated API](docs/api.md)
+- [Database backup, restore, migration, and retention](docs/database.md)
 - [Synthetic demonstration and benchmark protocol](labs/README.md)
 - [Running twelve-service inventory lab](labs/inventory/README.md)
 - [Validation record](docs/validation.md)
