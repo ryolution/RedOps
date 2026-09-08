@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, event, inspect, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
-from redops.core.errors import RedOpsError
+from redops.core.errors import AssessmentNotFound, RedOpsError
 from redops.database.models import (
     ActionRecord,
     Assessment,
@@ -131,8 +131,34 @@ class Repository:
                     .limit(1)
                 ).first()
             if row is None:
-                raise RedOpsError("No matching assessment found.")
+                raise AssessmentNotFound("No matching assessment found.")
             return row.document
+
+    def list_assessments(
+        self,
+        *,
+        engagement: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        if not 1 <= limit <= 100 or not 0 <= offset <= 1000000:
+            raise RedOpsError("Assessment pagination is outside the supported bounds.")
+        self._check_schema()
+        statement = (
+            select(
+                Assessment.id,
+                Assessment.created_at,
+                Assessment.engagement,
+                Assessment.operator,
+            )
+            .order_by(Assessment.created_at.desc(), Assessment.id.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        if engagement is not None:
+            statement = statement.where(Assessment.engagement == engagement)
+        with Session(self.engine) as session:
+            return [dict(row) for row in session.execute(statement).mappings()]
 
     def inventory(self, assessment_id: str | None = None) -> list[dict[str, Any]]:
         return self.get(assessment_id)["hosts"]

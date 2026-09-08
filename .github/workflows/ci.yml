@@ -18,3 +18,38 @@ jobs:
       - run: ruff format --check .
       - run: pytest
       - run: python -m build
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: redops
+          POSTGRES_PASSWORD: test-only-ci-password
+          POSTGRES_DB: redops_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U redops -d redops_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e '.[dev,postgres]'
+      - run: pytest tests/test_postgres.py
+        env:
+          REDOPS_TEST_POSTGRES_URL: postgresql+psycopg://redops:test-only-ci-password@localhost:5432/redops_test
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+      - run: docker build -t redops .
+      - name: Run isolated offline workflow
+        run: >-
+          docker run --rm --network none --read-only --cap-drop ALL
+          --security-opt no-new-privileges --tmpfs /tmp
+          --tmpfs /data:uid=10001,gid=10001 --tmpfs /reports:uid=10001,gid=10001
+          redops workflow run --scope labs/demo-scope.yaml --input labs/demo-nmap.xml
+          --catalog labs/demo-catalog.json --output-dir /reports

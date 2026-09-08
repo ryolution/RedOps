@@ -25,12 +25,12 @@ def require_distinct_paths(paths: list[Path]) -> None:
                 raise InputError("Input, output, database, and audit paths must be distinct.")
 
 
-def atomic_write(path: Path, content: str) -> None:
+def atomic_write(path: Path, content: str | bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=".redops-", dir=path.parent)
     try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            stream.write(content)
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(content.encode("utf-8") if isinstance(content, str) else content)
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)

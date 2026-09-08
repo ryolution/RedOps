@@ -15,7 +15,9 @@ flowchart TD
     Scope --> Import[Bounded Nmap XML import]
     Import --> Intelligence[Exact CPE evidence correlation]
     Intelligence --> Store[SQLAlchemy assessment transaction]
-    Store --> Reports[JSON and escaped HTML reports]
+    Store --> Reports[JSON, escaped HTML, and PDF reports]
+    API[Authenticated read-only API] --> Store
+    API --> Reports
     Workflow --> Audit[Structured audit events]
     CLI --> Health[Metasploit version health check]
     Health --> RPC[HTTPS MessagePack RPC]
@@ -26,12 +28,13 @@ flowchart TD
 | Package | Responsibility |
 | --- | --- |
 | `redops/cli` | Argument parsing, commands, safe error messages |
+| `redops/api` | Authenticated assessment access and report downloads |
 | `redops/core` | Domain records, input limits, configuration, scope, audit, orchestration |
 | `redops/recon` | Import existing Nmap XML; normalize addresses and open services |
 | `redops/intelligence` | Local evidence, exact CPE correlation, NVD advisory providers and cache |
 | `redops/database` | Typed SQLAlchemy models, atomic assessment persistence, inventory |
 | `redops/metasploit` | Authenticated version health check with verified TLS |
-| `redops/reporting` | JSON, self-contained HTML, measured benchmark calculations |
+| `redops/reporting` | JSON, self-contained HTML, PDF, measured benchmark calculations |
 | `labs` | Synthetic inventory and intelligence fixtures; no running vulnerable targets |
 
 The CLI depends on the workflow; parsers and matchers depend only on domain
@@ -73,7 +76,9 @@ with the DB. A failure after DB commit must be reported as such.
 
 ## Scope and trust
 
-The local CLI trusts the operating-system account. An operator name and approval
+The local CLI trusts the operating-system account. The read-only API requires a
+shared bearer token for all data routes. The token has access to every engagement
+in its database. An operator name and approval
 declaration are attribution, not authentication or proof of legal authorization.
 Scope documents require explicit IP/CIDR allowlists, approval attribution,
 timezone-aware expiry, engagement ID, and a host limit. Every imported IP address
@@ -91,12 +96,12 @@ come from the environment; TLS verification is mandatory and redirects are refus
 2. Nmap XML import and atomic inventory persistence.
 3. Reviewed local CVE evidence and explicit coverage reporting.
 4. Separate Metasploit health adapter.
-5. JSON/HTML reports, synthetic demonstration, benchmark calculator.
+5. JSON/HTML/PDF reports, authenticated API, synthetic demonstration, benchmark calculator.
 6. Regression tests, packaging, CI, Docker, installation documentation.
 
-Future defensive work includes an authenticated API, reviewed schema migrations,
-and PDF rendering. A distributed job queue is unnecessary for
-the current bounded local workflow.
+The API reads stored snapshots. PDF rendering uses local built-in fonts and
+explicit Unicode escapes for unsupported characters. Schema changes still require
+reviewed migrations. A distributed job queue is unnecessary for the bounded workflow.
 
 ## Reference contracts
 

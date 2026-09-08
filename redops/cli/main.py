@@ -3,6 +3,7 @@
 import argparse
 import getpass
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -32,13 +33,14 @@ def parser() -> argparse.ArgumentParser:
         "--database", help="SQLAlchemy URL; defaults to REDOPS_DATABASE_URL or local SQLite"
     )
     root.add_argument("--audit", type=Path, help="Audit JSONL path; defaults to REDOPS_AUDIT_PATH")
+    root.add_argument("--verbose", action="store_true", help="Write operational logs to stderr")
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize schema version 1 in a new database")
     inventory = commands.add_parser("inventory", help="Read an assessment's stored inventory")
     inventory.add_argument("--assessment", help="Assessment ID; default is the latest assessment")
     report = commands.add_parser("report", help="Export a stored assessment")
     report.add_argument("--assessment")
-    report.add_argument("--format", choices=["json", "html"], default="html")
+    report.add_argument("--format", choices=["json", "html", "pdf"], default="html")
     report.add_argument("--output", type=Path, required=True)
     workflow = commands.add_parser("workflow", help="Run an offline assessment")
     run = workflow.add_subparsers(dest="workflow_command", required=True).add_parser("run")
@@ -50,7 +52,9 @@ def parser() -> argparse.ArgumentParser:
         command.add_argument(
             "--dry-run", action="store_true", help="Preview; only audit events are written"
         )
-        command.add_argument("--output-dir", type=Path, help="Export JSON and HTML after saving")
+        command.add_argument(
+            "--output-dir", type=Path, help="Export JSON, HTML, and PDF after saving"
+        )
         command.add_argument(
             "--nvd", choices=["online", "offline"], help="Attach NVD advisories to candidates"
         )
@@ -79,6 +83,13 @@ def parser() -> argparse.ArgumentParser:
         "benchmark", help="Calculate savings from supplied measurements"
     )
     benchmark.add_argument("--input", type=Path, required=True)
+    assessments = commands.add_parser("assessments", help="List saved assessment summaries")
+    assessments.add_argument("--engagement")
+    assessments.add_argument("--limit", type=int, default=50)
+    assessments.add_argument("--offset", type=int, default=0)
+    serve = commands.add_parser("serve", help="Start the authenticated read-only API")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8000)
     return root
 
 
@@ -111,11 +122,11 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
         )
         if args.output_dir:
             try:
-                for format_name in ("json", "html"):
+                for format_name in ("json", "html", "pdf"):
                     export_report(
                         document, args.output_dir / f"{document['id']}.{format_name}", format_name
                     )
-            except OSError as exc:
+            except (OSError, RedOpsError) as exc:
                 raise RedOpsError(
                     f"Assessment {document['id']} was saved, but report export failed."
                 ) from exc
@@ -127,6 +138,15 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     try:
         if args.command == "benchmark":
             result = calculate_benchmark(args.input)
+        elif args.command == "serve":
+            import uvicorn
+
+            from redops.api.app import create_app
+
+            if not 1 <= args.port <= 65535:
+                raise RedOpsError("API port must be between 1 and 65535.")
+            uvicorn.run(create_app(settings), host=args.host, port=args.port, access_log=False)
+            result = {"status": "stopped"}
         elif args.command == "intelligence":
             advisory_source: AdvisoryProvider = (
                 MockAdvisoryProvider()
@@ -151,6 +171,12 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
                     result = {"status": "initialized", "schema_version": 1}
                 elif args.command == "inventory":
                     result = repository.inventory(args.assessment)
+                elif args.command == "assessments":
+                    result = repository.list_assessments(
+                        engagement=args.engagement,
+                        limit=args.limit,
+                        offset=args.offset,
+                    )
                 else:
                     document = repository.get(args.assessment)
                     export_report(document, args.output, args.format)
@@ -166,6 +192,10 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    logging.basicConfig(
+        level=logging.INFO if args.verbose else logging.WARNING,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
     defaults = Settings.from_env()
     settings = Settings(args.database or defaults.database_url, args.audit or defaults.audit_path)
     try:

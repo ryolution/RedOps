@@ -25,8 +25,12 @@ redops inventory
 redops report --format html --output reports/latest.html
 ```
 
-Open the HTML file directly in a browser. It is self-contained and can be printed
-to PDF using the browser. Automated PDF rendering is not implemented.
+The workflow exports JSON, HTML, and PDF reports. Open HTML directly in a browser,
+or export a saved assessment using
+`redops report --format pdf --output reports/latest.pdf`. PDF generation uses no
+browser or remote resources. Non-ASCII text appears as explicit Unicode escapes;
+JSON retains the original text. PDF input is limited to 2 MiB of assessment data;
+use HTML/JSON for larger documents.
 
 Preview without database writes, report files, or network requests:
 
@@ -57,11 +61,13 @@ specify `--assessment UUID` when working with multiple engagements.
 | `REDOPS_MSF_CA_FILE` | Optional trusted CA bundle for the health service |
 | `REDOPS_NVD_API_KEY` | Optional NVD API key, sent only in the HTTPS request header |
 | `REDOPS_NVD_CACHE` | `data/nvd-cache`; validated advisory cache |
+| `REDOPS_API_TOKEN` | Required shared token for the optional read-only API |
 
-Global `--database` and `--audit` flags precede the subcommand. Environment
+Global `--database`, `--audit`, and `--verbose` flags precede the subcommand. Environment
 configuration is preferred for database URLs containing credentials. Protect the
 database, scope declarations, reports, and audit log with OS access controls.
-This is a local CLI with no multiuser authentication or role-based authorization.
+The CLI uses the OS account. The optional API uses shared-token authentication;
+neither interface provides multiuser roles or per-engagement access control.
 Input, database, audit, and report paths must be distinct; conflicting paths and
 existing filesystem aliases are rejected before the relevant write.
 Do not commit assessment data or secrets. Audit files use mode 0600 when created
@@ -74,7 +80,7 @@ mismatches require a reviewed migration; no automatic migration or deletion runs
 For PostgreSQL, install `python -m pip install -e '.[postgres]'`, configure an
 existing database via `REDOPS_DATABASE_URL=postgresql+psycopg://...`, then run
 `redops init`. The SQLAlchemy models use portable types; live PostgreSQL deployment
-must be tested separately. The default container installs the SQLite dependencies.
+must be tested for your deployment. The container includes the PostgreSQL driver.
 
 ## Evidence catalog
 

@@ -1,8 +1,12 @@
 """Exact evidence correlation, without exploit or module selection."""
 
+import logging
+
 from redops.core.domain import Finding, Host
 from redops.core.errors import InputError
 from redops.intelligence.cve import Catalog, canonical_cpe
+
+logger = logging.getLogger(__name__)
 
 
 def correlate(hosts: tuple[Host, ...], catalog: Catalog) -> tuple[list[Finding], dict[str, int]]:
@@ -46,6 +50,11 @@ def correlate(hosts: tuple[Host, ...], catalog: Catalog) -> tuple[list[Finding],
                         matched_cpes=tuple(matched_cpes),
                     )
                 )
+    logger.info(
+        "Correlated %s candidate findings across %s services",
+        len(findings),
+        coverage["services_total"],
+    )
     return sorted(
         findings,
         key=lambda item: (

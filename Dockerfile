@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY redops ./redops
-RUN pip install --no-cache-dir . \
+RUN pip install --no-cache-dir '.[postgres]' \
     && useradd --uid 10001 --create-home redops \
     && mkdir /data /reports \
     && chown redops:redops /data /reports

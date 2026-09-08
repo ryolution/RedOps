@@ -1,12 +1,16 @@
 """Self-contained output; every observed value is escaped before HTML rendering."""
 
 import json
+import logging
 from collections import Counter
 from html import escape
 from pathlib import Path
 from typing import Any
 
 from redops.core.io import atomic_write
+from redops.reporting.pdf import render_pdf
+
+logger = logging.getLogger(__name__)
 
 
 def render_json(document: dict[str, Any]) -> str:
@@ -114,9 +118,13 @@ Catalog updated: {text(document["provenance"]["catalog_updated_at"])}</footer>
 </main></body></html>"""
 
 
-def export_report(document: dict[str, Any], destination: Path, format_name: str) -> None:
-    if format_name not in {"json", "html"}:
+def render_report(document: dict[str, Any], format_name: str) -> str | bytes:
+    renderers = {"json": render_json, "html": render_html, "pdf": render_pdf}
+    if format_name not in renderers:
         raise ValueError("Unsupported report format")
-    atomic_write(
-        destination, render_json(document) if format_name == "json" else render_html(document)
-    )
+    return renderers[format_name](document)
+
+
+def export_report(document: dict[str, Any], destination: Path, format_name: str) -> None:
+    atomic_write(destination, render_report(document, format_name))
+    logger.info("Assessment report exported as %s", format_name)

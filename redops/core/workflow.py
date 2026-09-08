@@ -1,4 +1,4 @@
-"""A bounded offline assessment from imported observations to stored evidence."""
+"""A bounded assessment with optional advisory context and no target connections."""
 
 import hashlib
 import uuid

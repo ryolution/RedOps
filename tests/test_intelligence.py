@@ -70,3 +70,16 @@ def test_missing_cvss_is_preserved(labs):
     assert catalog.records[0].cvss is None
     assert severity(None) == "unknown"
     assert severity(0) == "none"
+
+
+def test_candidate_limit_prevents_unbounded_expansion(labs):
+    hosts = parse_nmap((labs / "demo-nmap.xml").read_bytes())[:2]
+    catalog = load_catalog((labs / "demo-catalog.json").read_bytes())
+    expanded = replace(
+        catalog,
+        records=tuple(
+            replace(catalog.records[0], identifier=f"DEMO-LIMIT-{index}") for index in range(5001)
+        ),
+    )
+    with pytest.raises(InputError, match="Candidate limit"):
+        correlate(hosts, expanded)

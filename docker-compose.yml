@@ -20,7 +20,25 @@ services:
       - labs/demo-catalog.json
       - --output-dir
       - /reports
+  api:
+    profiles: [api]
+    build: .
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    environment:
+      REDOPS_API_TOKEN: ${REDOPS_API_TOKEN:-}
+    ports: ['127.0.0.1:8000:8000']
+    networks: [api-local]
+    volumes:
+      - redops-data:/data
+    command: [serve, --host, '0.0.0.0', --port, '8000']
 
 volumes:
   redops-data:
   redops-reports:
+
+networks:
+  api-local:
+    internal: true

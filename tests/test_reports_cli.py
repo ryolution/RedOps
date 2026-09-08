@@ -69,7 +69,7 @@ def test_cli_full_workflow_and_report(tmp_path, labs, capsys):
     )
     document = json.loads(capsys.readouterr().out)
     assert len(document["hosts"]) == 12
-    assert len(list((tmp_path / "reports").iterdir())) == 2
+    assert len(list((tmp_path / "reports").iterdir())) == 3
     assert main(base + ["inventory"]) == 0
     assert len(json.loads(capsys.readouterr().out)) == 12
     assert (

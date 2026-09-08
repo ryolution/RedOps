@@ -11,3 +11,7 @@ class InputError(RedOpsError):
 
 class ScopeError(RedOpsError):
     """Missing, expired, or insufficient scope declaration."""
+
+
+class AssessmentNotFound(RedOpsError):
+    """The requested assessment does not exist."""

@@ -1,5 +1,6 @@
 """Defensive Nmap XML parser. Does not launch scanners or process NSE output."""
 
+import logging
 from ipaddress import ip_address
 from xml.etree.ElementTree import ParseError
 
@@ -8,6 +9,8 @@ from defusedxml.common import DefusedXmlException
 
 from redops.core.domain import Host, Port, Service
 from redops.core.errors import InputError
+
+logger = logging.getLogger(__name__)
 
 
 def parse_nmap(content: bytes) -> tuple[Host, ...]:
@@ -91,6 +94,11 @@ def parse_nmap(content: bytes) -> tuple[Host, ...]:
         raise InputError("Nmap XML contains an invalid address or port.") from exc
     if not hosts:
         raise InputError("Nmap XML contains no up hosts with IP addresses.")
+    logger.info(
+        "Imported %s hosts and %s open services",
+        len(hosts),
+        sum(len(host.services) for host in hosts),
+    )
     return tuple(
         sorted(hosts, key=lambda item: (ip_address(item.ip).version, int(ip_address(item.ip))))
     )
