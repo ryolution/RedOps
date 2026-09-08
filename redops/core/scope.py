@@ -28,6 +28,8 @@ class Scope:
         if len(hosts) > self.max_hosts:
             raise ScopeError("Imported host count exceeds the declared limit.")
         for host in hosts:
+            if not host.addresses or host.ip not in host.addresses:
+                raise ScopeError("Every host must include its primary IP in its address list.")
             for value in host.addresses:
                 address = ip_address(value)
                 if not any(

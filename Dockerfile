@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.13-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -16,3 +16,11 @@ COPY labs ./labs
 USER 10001:10001
 ENTRYPOINT ["redops"]
 CMD ["--help"]
+
+FROM runtime AS inventory
+USER root
+RUN apt-get update && apt-get install --no-install-recommends -y nmap \
+    && rm -rf /var/lib/apt/lists/*
+USER 10001:10001
+
+FROM runtime AS default

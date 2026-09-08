@@ -3,12 +3,13 @@
 Validated locally on September 8, 2026, using Python 3.14.4 in `/tmp/redops-venv`
 and Python 3.13 in Docker.
 
-- 106 local pytest cases passed: input validation, scope expiry/allowlists, CPE evidence,
+- 142 local pytest cases passed: input validation, scope expiry/allowlists, CPE evidence,
   duplicate handling, SQL transaction rollback, report escaping, CLI workflows,
   dry-run side effects, path collision protection, benchmark arithmetic, and
   mocked MessagePack health requests, NVD response parsing, retry limits, cache
   expiry, provider injection, candidate limits, PDF contents, API authentication,
-  pagination, storage failures, and explicit offline behavior. The dedicated
+  pagination, storage failures, explicit offline behavior, scan planning, process
+  deadlines and cleanup, output collision races, and healthy lab HTTP routes. The dedicated
   PostgreSQL pytest case skips locally unless `REDOPS_TEST_POSTGRES_URL` is set;
   a separate live PostgreSQL check passed in Docker.
 - Ruff lint and formatting checks passed.
@@ -36,12 +37,15 @@ persistence, inventory retrieval, and history listing. The temporary database an
 network were removed. Compose configuration validation also passed.
 
 CI includes actual Python 3.11/3.13/3.14 tests, a dedicated PostgreSQL integration
-job, and an isolated container workflow. Current test dependencies emit upstream
+job, an isolated container workflow, and a running inventory lab check. A real
+unprivileged Nmap TCP connect scan against the twelve healthy lab containers
+returned twelve hosts with port 8080 open. No host ports were published; the lab
+used an internal Docker network. Current test dependencies emit upstream
 Starlette/httpx and AnyIO deprecation warnings; these are not suppressed.
 
 Live Metasploit RPC was not tested because no service or credentials were supplied;
 its TLS policy, authentication sequence, logout, and error paths have mocked tests.
-There is no active scanning, payload/exploit automation, or measured 60% improvement
+There is no payload/exploit automation or measured 60% improvement
 claim. PDF displays non-ASCII text as Unicode escapes; JSON retains original text.
 Deployment TLS, access controls, backups, migrations, and retention require operator
 configuration.

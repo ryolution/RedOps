@@ -25,7 +25,7 @@ def require_distinct_paths(paths: list[Path]) -> None:
                 raise InputError("Input, output, database, and audit paths must be distinct.")
 
 
-def atomic_write(path: Path, content: str | bytes) -> None:
+def atomic_write(path: Path, content: str | bytes, *, overwrite: bool = True) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=".redops-", dir=path.parent)
     try:
@@ -33,6 +33,10 @@ def atomic_write(path: Path, content: str | bytes) -> None:
             stream.write(content.encode("utf-8") if isinstance(content, str) else content)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        if overwrite:
+            os.replace(temporary, path)
+        else:
+            # A hard link publishes the complete file atomically and fails if it exists.
+            os.link(temporary, path)
     finally:
         Path(temporary).unlink(missing_ok=True)

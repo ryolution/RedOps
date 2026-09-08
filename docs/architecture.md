@@ -30,16 +30,27 @@ flowchart TD
 | `redops/cli` | Argument parsing, commands, safe error messages |
 | `redops/api` | Authenticated assessment access and report downloads |
 | `redops/core` | Domain records, input limits, configuration, scope, audit, orchestration |
-| `redops/recon` | Import existing Nmap XML; normalize addresses and open services |
+| `redops/recon` | Import Nmap XML; separately collect bounded TCP inventory in private labs |
 | `redops/intelligence` | Local evidence, exact CPE correlation, NVD advisory providers and cache |
 | `redops/database` | Typed SQLAlchemy models, atomic assessment persistence, inventory |
 | `redops/metasploit` | Authenticated version health check with verified TLS |
 | `redops/reporting` | JSON, self-contained HTML, PDF, measured benchmark calculations |
-| `labs` | Synthetic inventory and intelligence fixtures; no running vulnerable targets |
+| `labs` | Synthetic assessment fixtures and twelve healthy Docker inventory services |
 
 The CLI depends on the workflow; parsers and matchers depend only on domain
-records. There is no general-purpose RPC dispatcher or subprocess execution layer.
+records. The scan adapter invokes only a fixed Nmap TCP connect profile, without a shell.
 The health adapter exposes only a version check and is separate from assessments.
+
+`scan` is a separate inventory command: at most sixteen literal private/loopback
+IPv4 addresses, thirty-two TCP ports, four concurrent probes, a 100 ms per-host
+scan delay, one retry, a thirty-second host timeout, and a two-minute process
+deadline shortened by scope expiry. It uses no scripts, service/version probes,
+DNS, OS fingerprinting, CVE lookup, or RPC calls. Output is bounded and validated
+against the requested hosts and ports, then published without overwriting files.
+The adapter kills unfinished processes on errors. `ScanRunner` and
+`MockScanRunner` support offline tests. Scans create XML and audit events;
+assessment persistence remains a separate command. An empty result does not
+establish that hosts are absent or secure.
 
 ## Evidence and uncertainty
 
@@ -109,6 +120,7 @@ reviewed migrations. A distributed job queue is unnecessary for the bounded work
 - [SQLAlchemy transaction handling](https://docs.sqlalchemy.org/en/20/orm/session_basics.html)
 - [Rapid7 RPC protocol](https://docs.rapid7.com/metasploit/rpc-api/)
 - [NVD API documentation](https://nvd.nist.gov/developers/vulnerabilities)
+- [Nmap TCP connect scanning](https://nmap.org/book/man-port-scanning-techniques.html)
 
 These references document integration contracts; they do not establish that a
 live external integration or production deployment has been validated.

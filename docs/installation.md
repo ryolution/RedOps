@@ -137,7 +137,35 @@ for the offline assessment.
 `AdvisoryProvider`, `NvdTransport`, `InventoryParser`, and `HealthProvider` expose
 typed contracts. `MockAdvisoryProvider`, `MockInventoryParser`, and
 `MockMetasploitClient` provide explicit offline implementations for tests and
-demonstrations. The Nmap adapter parses real Nmap XML; it does not launch scans.
+demonstrations. `ScanRunner` and `MockScanRunner` provide the corresponding
+execution boundary for the separate inventory command.
+
+## Private lab TCP inventory
+
+Install Nmap through your operating system package manager, or use the optional
+`inventory` Docker build target. The command uses unprivileged TCP connect calls
+and accepts only explicit private/loopback IPv4 addresses within a current scope.
+Supply one to sixteen hosts and one to thirty-two distinct TCP ports:
+
+```bash
+redops scan --scope /path/to/current-scope.yaml --target 127.0.0.1 \
+  --ports 8080 --output reports/local-inventory.xml --dry-run
+redops scan --scope /path/to/current-scope.yaml --target 127.0.0.1 \
+  --ports 8080 --output reports/local-inventory.xml
+```
+
+The example requires a declaration allowing `127.0.0.1/32` and a service you own.
+Repeat `--target` or use `--targets-file` with one literal IP per line; blank lines
+and lines starting with `#` are ignored. DNS names, CIDR expansion, arbitrary
+Nmap arguments, scripts, and service fingerprinting are unavailable. The command
+records reachability, with service names only guessed from the port table.
+There is no automatic assessment, advisory lookup, or RPC action after scanning.
+Existing XML output is never overwritten. Preview writes only audit events and
+does not require Nmap. A completed result lists targets without observed open
+ports explicitly; it is not a finding that these hosts are secure or absent.
+
+See the [twelve-service inventory lab](../labs/inventory/README.md) for a running
+Docker example isolated from external networks.
 
 ## Container demonstration
 

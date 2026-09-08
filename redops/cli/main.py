@@ -20,6 +20,7 @@ from redops.intelligence.advisories import AdvisoryProvider, MockAdvisoryProvide
 from redops.intelligence.nvd import CachedAdvisoryProvider, NvdClient
 from redops.metasploit.health import HealthProvider, MockMetasploitClient
 from redops.metasploit.rpc import MetasploitClient
+from redops.recon.nmap import scan_inventory
 from redops.reporting.benchmark import calculate_benchmark
 from redops.reporting.render import export_report
 
@@ -36,6 +37,16 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument("--verbose", action="store_true", help="Write operational logs to stderr")
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize schema version 1 in a new database")
+    scan = commands.add_parser("scan", help="Bounded TCP inventory of scoped private lab hosts")
+    scan.add_argument("--scope", type=Path, required=True)
+    targets = scan.add_mutually_exclusive_group(required=True)
+    targets.add_argument("--target", action="append", help="Literal IPv4 address; repeat per host")
+    targets.add_argument("--targets-file", type=Path, help="One literal IPv4 address per line")
+    scan.add_argument("--ports", required=True, help="1–32 comma-separated TCP port numbers")
+    scan.add_argument("--output", type=Path, required=True, help="New XML file; never overwritten")
+    scan.add_argument(
+        "--dry-run", action="store_true", help="Validate plan; write only audit events"
+    )
     inventory = commands.add_parser("inventory", help="Read an assessment's stored inventory")
     inventory.add_argument("--assessment", help="Assessment ID; default is the latest assessment")
     report = commands.add_parser("report", help="Export a stored assessment")
@@ -100,6 +111,16 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     elif args.command == "benchmark":
         protected_paths.append(args.input)
     require_distinct_paths(protected_paths)
+    if args.command == "scan":
+        return scan_inventory(
+            settings,
+            args.scope,
+            args.target or [],
+            args.ports,
+            args.output,
+            dry_run=args.dry_run,
+            targets_path=args.targets_file,
+        )
     if args.command in {"workflow", "analyze"}:
         if args.dry_run and args.output_dir:
             raise RedOpsError("--output-dir cannot be combined with --dry-run.")

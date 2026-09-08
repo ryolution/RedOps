@@ -53,3 +53,25 @@ jobs:
           --tmpfs /data:uid=10001,gid=10001 --tmpfs /reports:uid=10001,gid=10001
           redops workflow run --scope labs/demo-scope.yaml --input labs/demo-nmap.xml
           --catalog labs/demo-catalog.json --output-dir /reports
+  inventory-lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start twelve healthy fixtures on an internal network
+        run: docker compose -p redops-ci-lab -f labs/inventory/compose.yaml up --build --wait
+      - name: Check real TCP inventory
+        run: |
+          docker compose -p redops-ci-lab -f labs/inventory/compose.yaml build scanner
+          docker compose -p redops-ci-lab -f labs/inventory/compose.yaml run --rm scanner > /tmp/inventory.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path('/tmp/inventory.json').read_text())
+          assert result['status'] == 'completed'
+          assert len(result['hosts']) == 12
+          assert result['targets_without_open_ports'] == []
+          assert all(host['services'][0]['port'] == {'number': 8080, 'protocol': 'tcp'} for host in result['hosts'])
+          PY
+      - name: Remove test containers and data
+        if: always()
+        run: docker compose -p redops-ci-lab -f labs/inventory/compose.yaml down --volumes

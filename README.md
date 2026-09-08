@@ -35,7 +35,7 @@ scope declaration, previously collected Nmap XML, and reviewed evidence catalog.
 | Component | Functionality |
 | --- | --- |
 | Core | Scope declarations, expiry checks, audit events, dry-run, bounded input |
-| Recon | Nmap XML import, normalized addresses, services, versions, and CPEs |
+| Recon | Nmap XML import and bounded TCP inventory of scoped private lab hosts |
 | Intelligence | Evidence correlation, CVSS ranking, NVD lookup, retries, cache |
 | Database | Transactional SQLAlchemy observations, snapshots, SQLite/PostgreSQL |
 | Metasploit | Verified-TLS RPC health check and explicit offline mock |
@@ -60,6 +60,7 @@ contacts external services or writes database/report files.
 - [Installation, CLI, configuration, and deployment](docs/installation.md)
 - [Authenticated API](docs/api.md)
 - [Synthetic demonstration and benchmark protocol](labs/README.md)
+- [Running twelve-service inventory lab](labs/inventory/README.md)
 - [Validation record](docs/validation.md)
 
 ## Development
@@ -69,7 +70,8 @@ bash scripts/check.sh
 docker compose run --rm redops
 ```
 
-The Nmap integration imports observations; it does not launch scans. Metasploit
+The optional scan command collects bounded TCP inventory in private labs. Its
+healthy twelve-service Docker lab provides an isolated live check. Metasploit
 integration reports health metadata. Exploit/module selection, payload preparation,
 and exploitation are outside the implemented scope. The API uses a shared token
 and OS-level storage controls, not multiuser roles. No time-reduction claim is made

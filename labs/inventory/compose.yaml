@@ -1,0 +1,126 @@
+x-fixture: &fixture
+  build: .
+  image: redops-inventory-fixture
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 32
+  mem_limit: 64m
+  healthcheck:
+    test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).close()"]
+    interval: 3s
+    timeout: 3s
+    retries: 10
+
+services:
+  service-01:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-01
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.10
+  service-02:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-02
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.11
+  service-03:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-03
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.12
+  service-04:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-04
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.13
+  service-05:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-05
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.14
+  service-06:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-06
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.15
+  service-07:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-07
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.16
+  service-08:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-08
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.17
+  service-09:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-09
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.18
+  service-10:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-10
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.19
+  service-11:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-11
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.20
+  service-12:
+    <<: *fixture
+    environment:
+      LAB_SERVICE_NAME: service-12
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.21
+  scanner:
+    profiles: [tools]
+    build:
+      context: ../..
+      target: inventory
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 256m
+    tmpfs: [/tmp]
+    networks:
+      inventory-lab:
+        ipv4_address: 172.30.77.30
+    volumes:
+      - inventory-data:/data
+    command: [scan, --scope, labs/inventory/scope.yaml, --targets-file, labs/inventory/targets.txt, --ports, '8080', --output, /data/inventory.xml]
+
+volumes:
+  inventory-data:
+
+networks:
+  inventory-lab:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.77.0/24

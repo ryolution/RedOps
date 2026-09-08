@@ -13,7 +13,7 @@ from redops.core.errors import InputError
 logger = logging.getLogger(__name__)
 
 
-def parse_nmap(content: bytes) -> tuple[Host, ...]:
+def parse_nmap(content: bytes, *, allow_empty: bool = False) -> tuple[Host, ...]:
     if len(content) > 8 * 1024 * 1024:
         raise InputError("Nmap XML exceeds the 8 MiB limit.")
     try:
@@ -92,7 +92,7 @@ def parse_nmap(content: bytes) -> tuple[Host, ...]:
             )
     except (KeyError, ValueError) as exc:
         raise InputError("Nmap XML contains an invalid address or port.") from exc
-    if not hosts:
+    if not hosts and not allow_empty:
         raise InputError("Nmap XML contains no up hosts with IP addresses.")
     logger.info(
         "Imported %s hosts and %s open services",
