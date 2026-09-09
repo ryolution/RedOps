@@ -19,12 +19,16 @@ def test_pdf_contains_inventory_findings_and_provenance(preview):
     assert preview["provenance"]["catalog_sha256"] in content.replace("\n", "")
 
 
-def test_pdf_preserves_unicode_as_explicit_escapes(preview):
-    preview["hosts"][0]["hostname"] = "demo-\u03bb"
+def test_pdf_preserves_supported_unicode_and_escapes_missing_glyphs(preview, caplog):
+    preview["hosts"][0]["hostname"] = "démo-λ café 漢"
+    preview["warnings"].append("مرحبا بالعالم")
     content = "\n".join(
         page.extract_text() for page in PdfReader(io.BytesIO(render_pdf(preview))).pages
     )
-    assert "demo-\\u03bb" in content
+    assert "démo-λ café \\u6f22" in content
+    # PDF extraction may reorder Arabic runs; every original letter remains mapped.
+    assert set("مرحبا بالعالم") <= set(content)
+    assert "missing" not in caplog.text.lower()
 
 
 def test_pdf_export_writes_a_real_document(preview, tmp_path):

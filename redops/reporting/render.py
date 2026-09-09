@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from redops.core.io import atomic_write
+from redops.core.reviews import finding_key
+from redops.reporting.document import review_by_key
 from redops.reporting.pdf import render_pdf
 
 logger = logging.getLogger(__name__)
@@ -21,6 +23,32 @@ def render_html(document: dict[str, Any]) -> str:
     def text(value: object) -> str:
         return escape(str(value), quote=True)
 
+    reviews = review_by_key(document)
+
+    def decision(item: dict[str, Any]) -> str:
+        annotation = reviews.get(finding_key(document["id"], item))
+        if annotation is None:
+            return ""
+        result = f"<p><strong>Operator disposition:</strong> {text(annotation['disposition'])}</p>"
+        review = annotation["review"]
+        if review:
+            result += (
+                f"<p>Review {review['id']} · {text(review['operator'])} · "
+                f"{text(review['timestamp'])}</p><p>{text(review['notes'])}</p>"
+            )
+        else:
+            result += "<p>No operator decision recorded.</p>"
+        return result
+
+    review_notice = ""
+    if "review_export" in document:
+        export = document["review_export"]
+        review_notice = (
+            f"<h2>Operator review annotations</h2><p>Review revision: {export['revision']} · "
+            f"Exported: {text(export['exported_at'])}</p>"
+            f"<p>{text(export['interpretation'])}</p>"
+        )
+
     counts = Counter(finding["severity"] for finding in document["findings"])
     cards = "".join(
         f'<div class="card"><strong>{counts[level]}</strong><span>{level.title()}</span></div>'
@@ -33,16 +61,18 @@ def render_html(document: dict[str, Any]) -> str:
             for value in (
                 host["ip"],
                 host["hostname"],
-                service["port"]["number"],
-                service["port"]["protocol"],
-                service["name"],
-                service["product"],
-                service["version"],
+                host["os"] or "unknown",
+                service["port"]["number"] if service else "—",
+                service["port"]["protocol"] if service else "—",
+                service["name"] if service else "No open services recorded",
+                service["product"] if service else "",
+                service["version"] if service else "",
+                ", ".join(service["cpes"]) if service else "",
             )
         )
         + "</tr>"
         for host in document["hosts"]
-        for service in host["services"]
+        for service in host["services"] or [None]
     )
     findings = (
         "".join(
@@ -55,7 +85,9 @@ def render_html(document: dict[str, Any]) -> str:
             f"<p><strong>Review status:</strong> {text(item['status'])}</p>"
             f"<p><strong>Remediation:</strong> {text(item['remediation'])}</p>"
             f"<p><strong>Evidence:</strong> {text(', '.join(item['matched_cpes']))}</p>"
-            f"<p><strong>Source:</strong> {text(item['source'])}</p></article>"
+            f"<p><strong>Source:</strong> {text(item['source'])}</p>"
+            + decision(item)
+            + "</article>"
             for item in document["findings"]
         )
         or "<p>No candidates were found in the supplied catalog. "
@@ -77,6 +109,9 @@ def render_html(document: dict[str, Any]) -> str:
             "Candidate scores above remain those supplied in the reviewed catalog.</p>" + advisories
         )
     coverage = document["coverage"]
+    provenance = "<br>".join(
+        f"{text(key)}: {text(value)}" for key, value in document["provenance"].items()
+    )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
@@ -107,14 +142,14 @@ footer {{ font-size: .8rem; overflow-wrap: anywhere; color: #526172; margin-top:
 <h2>Candidate findings</h2><div class="cards">{cards}</div>
 <p>{len(document["hosts"])} hosts · {coverage["services_total"]} open services ·
 {coverage["services_with_supported_cpe"]} services with a supported versioned CPE.</p>
+{review_notice}
 <h2>Service inventory</h2><div class="table-scroll"><table>
-<thead><tr><th>IP</th><th>Hostname</th><th>Port</th><th>Protocol</th><th>Service</th>
-<th>Product</th><th>Version</th></tr></thead><tbody>{inventory}</tbody></table></div>
+<thead><tr><th>IP</th><th>Hostname</th><th>OS</th><th>Port</th><th>Protocol</th><th>Service</th>
+<th>Product</th><th>Version</th><th>CPE observations</th></tr></thead>
+<tbody>{inventory}</tbody></table></div>
 <h2>Evidence and remediation</h2>{findings}{advisories}
 <footer>Assessment: {text(document["id"])}<br>
-Nmap SHA-256: {text(document["provenance"]["nmap_sha256"])}<br>
-Catalog SHA-256: {text(document["provenance"]["catalog_sha256"])}<br>
-Catalog updated: {text(document["provenance"]["catalog_updated_at"])}</footer>
+{provenance}</footer>
 </main></body></html>"""
 
 

@@ -28,9 +28,12 @@ redops report --format html --output reports/latest.html
 The workflow exports JSON, HTML, and PDF reports. Open HTML directly in a browser,
 or export a saved assessment using
 `redops report --format pdf --output reports/latest.pdf`. PDF generation uses no
-browser or remote resources. Non-ASCII text appears as explicit Unicode escapes;
+browser or remote resources. Bundled DejaVu Sans fonts support accented Latin
+and shaped Arabic text. Unsupported glyphs appear as explicit Unicode escapes;
 JSON retains the original text. PDF input is limited to 2 MiB of assessment data;
 use HTML/JSON for larger documents.
+Add `--include-reviews` to export subsequent operator decisions with an explicit
+review revision and export timestamp; original observations remain unchanged.
 
 Preview without database writes, report files, or network requests:
 

@@ -61,7 +61,7 @@ not delivered; **excluded** = outside the approved implementation scope.
 | A03 | Catalog validation, freshness warnings and match explanation | implemented | Catalog CLI and coverage tests |
 | A04 | Append-only finding reviews and stale-edit protection | implemented | CLI/API, migration, backup/retention and concurrency tests |
 | A05 | Single-operator browser authentication and dashboard | awaiting validation | Session/CSRF and HTTP journey tests pass; real browser acceptance remains |
-| A06 | Optional reviewed reports and Unicode fonts | remaining | Old/new report compatibility and multilingual rendering |
+| A06 | Optional reviewed reports and Unicode fonts | implemented | CLI/API exports, old-schema compatibility, Latin/Arabic and missing-glyph tests |
 | A07 | Offline diagnostics and reproducible release dependencies | remaining | No-side-effect doctor tests; locked CI/container installation |
 | A08 | Paired-trial evaluation tooling | remaining | Cohort validation, unsuccessful-trial retention and arithmetic tests |
 | A09 | Live RPC and real manual timing evidence | awaiting validation | Operator input; mocks cannot satisfy acceptance |

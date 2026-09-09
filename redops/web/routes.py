@@ -20,6 +20,7 @@ from redops.core.errors import AssessmentNotFound, InputError, RedOpsError, Revi
 from redops.core.reviews import DISPOSITIONS
 from redops.database.repository import Repository
 from redops.database.reviews import add_review, list_reviews
+from redops.reporting.document import report_document
 from redops.reporting.render import render_report
 from redops.web.sessions import Sessions
 
@@ -440,8 +441,17 @@ def install_dashboard(
         format_name = request.query_params.get("format", "pdf")
         if format_name not in {"json", "html", "pdf"}:
             raise InputError("Unsupported report format.")
+        include_reviews = request.query_params.get("include_reviews", "false")
+        if include_reviews not in {"true", "false"}:
+            raise InputError("Review inclusion must be true or false.")
         content = await run_in_threadpool(
-            read, lambda repository: render_report(repository.get(assessment_id), format_name)
+            read,
+            lambda repository: render_report(
+                report_document(
+                    repository, assessment_id, include_reviews=include_reviews == "true"
+                ),
+                format_name,
+            ),
         )
         return Response(
             content,

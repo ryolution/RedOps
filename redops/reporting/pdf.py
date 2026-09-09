@@ -1,24 +1,51 @@
 """Generate portable PDF reports without HTML execution or remote font/resource loads."""
 
 import json
+import logging
+from collections import Counter
 from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
+from fontTools.ttLib import TTFont
 from fpdf import FPDF
 
 from redops.core.errors import InputError
+from redops.core.reviews import finding_key
+from redops.reporting.document import review_by_key
+
+FONTS = Path(__file__).resolve().parent / "fonts"
+logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=2)
+def supported_characters(bold: bool) -> frozenset[int]:
+    with TTFont(FONTS / ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf")) as font:
+        return frozenset(font.getBestCmap())
+
+
+def font_text(value: object, *, bold: bool = False) -> str:
+    """Keep supported glyphs; represent unsupported/control characters reversibly."""
+    supported = supported_characters(bold)
+    return "".join(
+        char
+        if char == "\n" or ord(char) in supported and ord(char) >= 32
+        else char.encode("unicode_escape").decode("ascii")
+        for char in str(value)
+    )
 
 
 class AssessmentPDF(FPDF):
     def header(self) -> None:
-        self.set_font("Helvetica", "B", 15)
+        self.set_font("DejaVu", "B", 15)
         self.set_text_color(160, 45, 45)
         self.cell(0, 10, "RedOps Assessment", new_x="LMARGIN", new_y="NEXT")
         self.set_text_color(25, 38, 52)
 
     def footer(self) -> None:
         self.set_y(-15)
-        self.set_font("Helvetica", size=8)
+        self.set_font("DejaVu", size=8)
         self.cell(0, 10, f"RedOps | Page {self.page_no()}", align="C")
 
 
@@ -29,6 +56,9 @@ def render_pdf(document: dict[str, Any]) -> bytes:
             "use JSON or HTML for larger reports."
         )
     pdf = AssessmentPDF()
+    for style, filename in (("", "DejaVuSans.ttf"), ("B", "DejaVuSans-Bold.ttf")):
+        pdf.add_font("DejaVu", style, FONTS / filename)
+    pdf.set_text_shaping(True)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.set_margins(16, 14, 16)
     pdf.set_title("RedOps Assessment")
@@ -37,12 +67,8 @@ def render_pdf(document: dict[str, Any]) -> bytes:
     pdf.add_page()
 
     def paragraph(value: object, *, bold: bool = False) -> None:
-        # Core PDF fonts are portable. Unsupported Unicode is represented reversibly,
-        # rather than being dropped or fetching a font over the network.
-        value = str(value).encode("ascii", errors="backslashreplace").decode("ascii")
-        value = "".join(char if char in "\n\t" or ord(char) >= 32 else " " for char in value)
-        pdf.set_font("Helvetica", "B" if bold else "", 10)
-        pdf.multi_cell(0, 5, value, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("DejaVu", "B" if bold else "", 10)
+        pdf.multi_cell(0, 5, font_text(value, bold=bold), new_x="LMARGIN", new_y="NEXT")
         pdf.ln(2)
 
     paragraph(document["scope"]["engagement"], bold=True)
@@ -53,8 +79,28 @@ def render_pdf(document: dict[str, Any]) -> bytes:
     for warning in document["warnings"]:
         paragraph(warning)
     paragraph(
-        "Non-ASCII text is preserved as Unicode escapes. The JSON report retains original text."
+        "Glyphs unavailable in the bundled font appear as explicit Unicode escapes. "
+        "The JSON report retains original text."
     )
+    counts = Counter(finding["severity"] for finding in document["findings"])
+    coverage = document["coverage"]
+    paragraph(
+        f"{len(document['hosts'])} hosts | {coverage['services_total']} open services | "
+        f"{len(document['findings'])} candidate findings\n"
+        + " | ".join(
+            f"{level}: {counts[level]}"
+            for level in ("critical", "high", "medium", "low", "none", "unknown")
+        )
+    )
+    paragraph(f"{coverage['services_with_supported_cpe']} services with a supported versioned CPE.")
+    reviews = review_by_key(document)
+    if "review_export" in document:
+        export = document["review_export"]
+        paragraph("Operator review annotations", bold=True)
+        paragraph(
+            f"Review revision: {export['revision']}\nExported: {export['exported_at']}\n"
+            f"{export['interpretation']}"
+        )
     paragraph("Inventory", bold=True)
     for host in document["hosts"]:
         paragraph(
@@ -89,6 +135,17 @@ def render_pdf(document: dict[str, Any]) -> bytes:
         ):
             paragraph(f"{label}: {finding[field]}")
         paragraph("Matched CPEs: " + ", ".join(finding["matched_cpes"]))
+        annotation = reviews.get(finding_key(document["id"], finding))
+        if annotation:
+            paragraph(f"Operator disposition: {annotation['disposition']}")
+            review = annotation["review"]
+            if review:
+                paragraph(
+                    f"Review {review['id']} | {review['operator']} | {review['timestamp']}\n"
+                    f"{review['notes']}"
+                )
+            else:
+                paragraph("No operator decision recorded.")
     if document.get("advisories"):
         paragraph("NVD advisory context", bold=True)
         paragraph(
@@ -105,4 +162,6 @@ def render_pdf(document: dict[str, Any]) -> bytes:
     paragraph("Provenance", bold=True)
     for key, value in document["provenance"].items():
         paragraph(f"{key}: {value}")
-    return bytes(pdf.output())
+    result = bytes(pdf.output())
+    logger.info("Generated PDF with %d pages", pdf.page_no())
+    return result

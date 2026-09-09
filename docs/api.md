@@ -30,6 +30,11 @@ The API disables request access logs and public OpenAPI/Swagger endpoints.
 | `GET /assessments/{uuid}/inventory` | Bearer token | Recorded hosts and services |
 | `GET /assessments/{uuid}/report?format=json` | Bearer token | JSON, HTML, or PDF attachment |
 
+The report route accepts `include_reviews=true` to add the latest operator
+decisions in a separate `review_export` section (JSON) or labeled annotations
+(HTML/PDF). It includes a revision and UTC export timestamp; the assessment
+endpoint always returns its original immutable snapshot.
+
 `/assessments` accepts `engagement`, `limit` (1–100, default 50), and `offset`
 (0–1,000,000). Records are ordered by creation time and ID, newest first. With no
 engagement filter, results span all engagements. Unknown UUIDs return 404;

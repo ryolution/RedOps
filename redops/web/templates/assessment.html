@@ -5,6 +5,10 @@
 <div class="page-heading"><div><p class="eyebrow">Assessment evidence</p><h1>{{ document.scope.engagement }}</h1>
 <p class="muted mono small">{{ document.id }}</p></div>
 <div class="downloads" aria-label="Report downloads">{% for format in ['json','html','pdf'] %}<a class="button secondary" href="/ui/assessments/{{ document.id }}/report?format={{ format }}">{{ format|upper }}</a>{% endfor %}</div></div>
+<form class="panel filters" action="/ui/assessments/{{ document.id }}/report" method="get">
+<div class="field"><label for="report-format">Reviewed report format</label><select id="report-format" name="format"><option value="pdf">PDF</option><option value="html">HTML</option><option value="json">JSON</option></select></div>
+<input type="hidden" name="include_reviews" value="true"><button type="submit">Export with reviews</button>
+<span class="muted small">Adds operator decisions at the exported review revision.</span></form>
 <div class="metrics"><section class="metric"><span>Hosts recorded</span><strong>{{ document.hosts|length }}</strong></section>
 <section class="metric"><span>Services recorded</span><strong>{{ document.coverage.services_total }}</strong></section>
 <section class="metric"><span>Candidate findings</span><strong>{{ document.findings|length }}</strong></section>

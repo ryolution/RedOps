@@ -1,6 +1,7 @@
 include Dockerfile docker-compose.yml requirements.txt .dockerignore
 recursive-include docs *.md
 recursive-include redops/web *.html *.css *.js
+recursive-include redops/reporting/fonts *.ttf *.txt *.md
 recursive-include labs *.md *.yaml *.xml *.json *.csv *.txt *.py Dockerfile
 recursive-include tests *.py
 recursive-include scripts *.sh

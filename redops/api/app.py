@@ -19,6 +19,7 @@ from redops.core.errors import AssessmentNotFound, InputError, RedOpsError, Revi
 from redops.core.io import require_distinct_paths
 from redops.database.repository import Repository
 from redops.database.reviews import add_review, list_reviews
+from redops.reporting.document import report_document
 from redops.reporting.render import render_report
 
 
@@ -179,10 +180,17 @@ def create_app(
         return read("api_inventory", lambda repository: repository.inventory(str(assessment_id)))
 
     @app.get("/assessments/{assessment_id}/report", dependencies=[Depends(authenticate)])
-    def report(assessment_id: UUID, format: Literal["json", "html", "pdf"] = "json") -> Response:
+    def report(
+        assessment_id: UUID,
+        format: Literal["json", "html", "pdf"] = "json",
+        include_reviews: bool = False,
+    ) -> Response:
         content = read(
             "api_report",
-            lambda repository: render_report(repository.get(str(assessment_id)), format),
+            lambda repository: render_report(
+                report_document(repository, str(assessment_id), include_reviews=include_reviews),
+                format,
+            ),
         )
         media_type = {"json": "application/json", "html": "text/html", "pdf": "application/pdf"}[
             format

@@ -17,7 +17,9 @@ inventory, filter candidate findings by severity or latest review disposition,
 and inspect scope, input provenance, evidence and coverage limitations. Lists
 contain 25 records per page. Select a finding to append an attributable decision
 and read its history. Concurrent edits return a conflict page that retains the
-unsaved notes for copying before reloading. Reports download as JSON, HTML or PDF.
+unsaved notes for copying before reloading. Reports download as JSON, HTML or PDF. The **Export with reviews** form adds
+the latest decisions with an export timestamp and review revision. The three
+format links export the original assessment without annotations.
 
 Forms have visible labels, keyboard focus indicators, and a skip-to-content link.
 Tables scroll within their panels on narrow screens. CSS and JavaScript are

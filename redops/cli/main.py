@@ -32,6 +32,7 @@ from redops.metasploit.health import HealthProvider, MockMetasploitClient
 from redops.metasploit.rpc import MetasploitClient
 from redops.recon.nmap import scan_inventory
 from redops.reporting.benchmark import calculate_benchmark
+from redops.reporting.document import report_document
 from redops.reporting.render import export_report
 
 
@@ -102,6 +103,7 @@ def parser() -> argparse.ArgumentParser:
     report.add_argument("--assessment")
     report.add_argument("--format", choices=["json", "html", "pdf"], default="html")
     report.add_argument("--output", type=Path, required=True)
+    report.add_argument("--include-reviews", action="store_true")
     workflow = commands.add_parser("workflow", help="Run an offline assessment")
     run = workflow.add_subparsers(dest="workflow_command", required=True).add_parser("run")
     analyze = commands.add_parser("analyze", help="Analyze scoped, previously collected Nmap XML")
@@ -152,7 +154,7 @@ def parser() -> argparse.ArgumentParser:
     assessments.add_argument("--engagement")
     assessments.add_argument("--limit", type=int, default=50)
     assessments.add_argument("--offset", type=int, default=0)
-    serve = commands.add_parser("serve", help="Start the authenticated read-only API")
+    serve = commands.add_parser("serve", help="Start the authenticated dashboard and API")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
     return root
@@ -295,7 +297,9 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
                         offset=args.offset,
                     )
                 else:
-                    document = repository.get(args.assessment)
+                    document = report_document(
+                        repository, args.assessment, include_reviews=args.include_reviews
+                    )
                     export_report(document, args.output, args.format)
                     result = {"assessment_id": document["id"], "output": str(args.output)}
             finally:
