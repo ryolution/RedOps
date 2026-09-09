@@ -3,20 +3,21 @@ Offensive Automation Toolkit
 
 
 RedOps provides scoped inventory and vulnerability evidence assessment. It imports
-Nmap XML, correlates exact CPEs against reviewed evidence, retrieves NVD advisory
+Nmap XML or normalized JSON inventory, correlates exact CPEs against reviewed evidence, retrieves NVD advisory
 context, preserves assessment history, and produces JSON, HTML, and PDF reports.
 An authenticated browser dashboard and API serve existing assessments and
 append operator review decisions.
 
 ## Run the offline demonstration
 
-Python 3.11 or newer is required. No Nmap installation, API key, Metasploit server,
+The example uses Linux Python 3.13; matching locks also support 3.11 and 3.14. No Nmap installation, API key, Metasploit server,
 or running target machine is needed for this demonstration.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install --require-hashes -r requirements/linux-py3.13-dev.txt
+python -m pip install --no-deps --no-build-isolation -e .
 redops workflow run \
   --scope labs/demo-scope.yaml \
   --input labs/demo-nmap.xml \
@@ -67,6 +68,7 @@ contacts external services or writes database/report files.
 - [Database backup, restore, migration, and retention](docs/database.md)
 - [Synthetic demonstration and benchmark protocol](labs/README.md)
 - [Running twelve-service inventory lab](labs/inventory/README.md)
+- [Release checks, diagnostics, and recovery](docs/release.md)
 - [Validation record](docs/validation.md)
 
 ## Development

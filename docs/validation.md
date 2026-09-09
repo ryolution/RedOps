@@ -1,5 +1,30 @@
 # Validation record
 
+## Completion batches: inventory, reviews, dashboard and delivery
+
+The requirement matrix is maintained in [completion.md](completion.md). The new
+software supports JSON inventory provenance, evidence-catalog validation, append-only
+reviews with schema migration, browser sessions/CSRF, reviewed exports and bundled
+Unicode fonts. Original offensive exclusions remain unmet.
+
+Local checks on Linux Python 3.14 include 215 passing regression tests with warnings treated
+as errors, three real Chromium journeys (desktop and 390px), hash-locked dependency
+installation, wheel/source asset validation, and execution of the installed wheel
+away from the checkout. The wheel check completes an offline assessment, all report
+formats, dashboard login and portable backup restoration. The digest-pinned container
+completed the offline demonstration with networking disabled: 12 synthetic hosts
+and 8 fictional candidate findings. Screenshots use synthetic records only and are
+linked from [release operation](release.md).
+
+Batches 1–5 each passed the existing six-job GitHub Actions workflow after pushing.
+The delivery batch adds a dedicated Chromium job, consumes hash locks in every
+Python job, and checks installed-wheel execution on Python 3.11/3.13/3.14. Its final
+CI result must be read from the commit's Actions checks; local results do not stand
+in for remote checks. Real Metasploit RPC evidence and genuine human benchmark
+measurements remain pending.
+
+## Historical baseline: September 8, 2026
+
 Validated locally on September 8, 2026, using Python 3.14.4 in `/tmp/redops-venv`
 and Python 3.13 in Docker.
 
@@ -49,13 +74,14 @@ CI includes actual Python 3.11/3.13/3.14 tests, a dedicated PostgreSQL integrati
 job, an isolated container workflow, and a running inventory lab check. A real
 unprivileged Nmap TCP connect scan against the twelve healthy lab containers
 returned twelve hosts with port 8080 open. No host ports were published; the lab
-used an internal Docker network. Current test dependencies emit upstream
-Starlette/httpx and AnyIO deprecation warnings; these are not suppressed.
+used an internal Docker network. At this earlier baseline, test dependencies emitted upstream
+Starlette/httpx and AnyIO warnings; the delivery batch resolves them through tested constraints.
 
 Live Metasploit RPC was not tested because no service or credentials were supplied;
 its TLS policy, authentication sequence, logout, and error paths have mocked tests.
 There is no payload/exploit automation or measured 60% improvement
-claim. PDF displays non-ASCII text as Unicode escapes; JSON retains original text.
+claim. At this earlier baseline PDF escaped non-ASCII text; the reviewed-report
+batch adds shaped Unicode fonts with explicit fallback for unsupported glyphs.
 Deployment TLS, access controls, off-host backup storage, and retention schedules
 require operator configuration. Portable archives exclude the audit log and
 external files, and are limited to 64 MiB and 100,000 rows.

@@ -48,6 +48,7 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument("--verbose", action="store_true", help="Write operational logs to stderr")
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize an empty database with the current schema")
+    commands.add_parser("doctor", help="Check local readiness without writes or network access")
     review = commands.add_parser("review", help="Inspect or append operator finding decisions")
     reviews = review.add_subparsers(dest="review_command", required=True)
     listing = reviews.add_parser("list")
@@ -161,6 +162,10 @@ def parser() -> argparse.ArgumentParser:
 
 
 def dispatch(args: argparse.Namespace, settings: Settings) -> object:
+    if args.command == "doctor":
+        from redops.core.doctor import diagnose
+
+        return diagnose(settings)
     protected_paths = settings.storage_paths()
     if args.command == "report":
         protected_paths.append(args.output)
@@ -320,7 +325,10 @@ def main(argv: list[str] | None = None) -> int:
     defaults = Settings.from_env()
     settings = Settings(args.database or defaults.database_url, args.audit or defaults.audit_path)
     try:
-        print(json.dumps(dispatch(args, settings), indent=2, allow_nan=False))
+        result = dispatch(args, settings)
+        print(json.dumps(result, indent=2, allow_nan=False))
+        if args.command == "doctor" and result["status"] == "error":
+            return 2
         return 0
     except RedOpsError as exc:
         print(f"redops: {exc}", file=sys.stderr)

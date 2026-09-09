@@ -13,16 +13,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '${{ matrix.python }}'
-      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install --require-hashes -r requirements/linux-py${{ matrix.python }}-dev.txt
+      - run: python -m pip install --no-deps --no-build-isolation -e .
       - run: ruff check .
       - run: ruff format --check .
-      - run: pytest
-      - run: python -m build
+      - run: pytest -W error
+      - run: python -m build --no-isolation
+      - run: python scripts/check_distribution.py
   postgres:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
         env:
           POSTGRES_USER: redops
           POSTGRES_PASSWORD: test-only-ci-password
@@ -36,10 +38,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: python -m pip install -e '.[dev,postgres]'
+      - run: python -m pip install --require-hashes -r requirements/linux-py3.13-dev.txt
+      - run: python -m pip install --no-deps --no-build-isolation -e .
       - run: pytest tests/test_postgres.py
         env:
           REDOPS_TEST_POSTGRES_URL: postgresql+psycopg://redops:test-only-ci-password@localhost:5432/redops_test
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --require-hashes -r requirements/linux-py3.13-dev.txt
+      - run: python -m pip install --no-deps --no-build-isolation -e .
+      - run: python -m playwright install --with-deps chromium
+      - run: pytest tests/browser -W error
+        env:
+          REDOPS_BROWSER_TESTS: '1'
+          REDOPS_SCREENSHOT_DIR: browser-artifacts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dashboard-screenshots
+          path: browser-artifacts
   container:
     runs-on: ubuntu-latest
     steps:

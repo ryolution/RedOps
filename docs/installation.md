@@ -1,11 +1,14 @@
 # Installation and operation
 
-Use Python 3.11 or newer. From the repository root:
+Use a supported Linux Python (3.11, 3.13 or 3.14). Select the matching lock below;
+this example uses Python 3.13. See [release and recovery](release.md) for Windows
+Docker Desktop/WSL and installed-wheel instructions. From the repository root:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install --require-hashes -r requirements/linux-py3.13-dev.txt
+python -m pip install --no-deps --no-build-isolation -e .
 redops --help
 ```
 
@@ -184,8 +187,8 @@ docker compose run --rm redops inventory
 
 The Compose service uses no network, runs as an unprivileged user, and stores
 assessments/reports in named volumes. This runs the same synthetic workflow; it
-does not deploy vulnerable services. Dependency ranges and the base-image tag
-must be locked to tested versions/digests for a release. The included CI workflow
+does not deploy vulnerable services. CI and container builds consume hash-pinned dependency files. Container bases
+are pinned by digest; see [dependency locks](../requirements/README.md). The included CI workflow
 runs linting, regression tests, and a package build on Python 3.11, 3.13, and 3.14.
 
 ## Development checks
@@ -194,7 +197,8 @@ runs linting, regression tests, and a package build on Python 3.11, 3.13, and 3.
 ruff check .
 ruff format --check .
 pytest
-python -m build
+python -m build --no-isolation
+python scripts/check_distribution.py
 ```
 
 See [the local validation record](validation.md) for completed checks and the

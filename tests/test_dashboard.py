@@ -200,3 +200,35 @@ def test_session_capacity_and_expiry():
     assert len(store._sessions) <= 128
     store.get("absent")
     assert store._sessions == {}
+
+
+def test_inventory_and_finding_pagination(client, settings, document):
+    from copy import deepcopy
+    from uuid import uuid4
+
+    expanded = deepcopy(document)
+    expanded["id"] = str(uuid4())
+    host = expanded["hosts"][0]
+    service = host["services"][0]
+    host["services"] = [
+        {**service, "port": {"number": 6000 + number, "protocol": "tcp"}} for number in range(30)
+    ]
+    expanded["hosts"] = [host]
+    expanded["findings"] = [
+        {**document["findings"][0], "port": 6000 + number} for number in range(30)
+    ]
+    expanded["coverage"]["services_total"] = 30
+    expanded["coverage"]["services_with_supported_cpe"] = 30
+    repository = Repository(settings.database_url)
+    try:
+        repository.save(expanded)
+    finally:
+        repository.close()
+    login(client)
+    root = f"/ui/assessments/{expanded['id']}"
+    first = client.get(root).text
+    second = client.get(root + "?inventory_page=2&findings_page=2").text
+    assert len(re.findall(r'<td class="mono">60\d\d/tcp</td>', first)) == 25
+    assert len(re.findall(r'<td class="mono">60\d\d/tcp</td>', second)) == 5
+    assert len(re.findall(r"/findings/[a-f0-9]{64}", first)) == 25
+    assert len(re.findall(r"/findings/[a-f0-9]{64}", second)) == 5

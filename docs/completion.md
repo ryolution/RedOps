@@ -44,7 +44,7 @@ not delivered; **excluded** = outside the approved implementation scope.
 | O28 / 7 | Exploit-module table and execution-result fields | excluded | No exploit records | Original requirement remains unmet |
 | O29 / 8, 9 | Installable repository and CLI command families | implemented | Packaging, CLI and CI checks | Fresh installation checklist |
 | O30 / 5, 12 | Authenticated assessment API | implemented | `api/app.py`, authentication and download tests | Single operator; token accesses all engagements |
-| O31 / 13 | Interactive assessment dashboard | awaiting validation | `web/`, dashboard journey/session/CSRF tests | Real browser journey and screenshot evidence |
+| O31 / 13 | Interactive assessment dashboard | implemented | `web/`, session/CSRF tests, Chromium journeys | Desktop/390px screenshots in `docs/images/` |
 | O32 / 10 | Reproducible lab with at least ten vulnerable targets | excluded | Twelve healthy services are a separate inventory fixture | Original vulnerable-target requirement remains unmet |
 | O33 / 11 | Benchmark calculation and comparison output | implemented | `reporting/benchmark.py`, arithmetic tests | Real measurements still required |
 | O34 / 11, final | Demonstrated greater-than-60% time reduction | awaiting validation | No improvement claim; measurement protocol documented | Operator-recorded paired timings; original offensive benchmark remains excluded |
@@ -60,9 +60,9 @@ not delivered; **excluded** = outside the approved implementation scope.
 | A02 | Normalized JSON inventory with provenance | implemented | XML/JSON equivalence and invalid-input tests |
 | A03 | Catalog validation, freshness warnings and match explanation | implemented | Catalog CLI and coverage tests |
 | A04 | Append-only finding reviews and stale-edit protection | implemented | CLI/API, migration, backup/retention and concurrency tests |
-| A05 | Single-operator browser authentication and dashboard | awaiting validation | Session/CSRF and HTTP journey tests pass; real browser acceptance remains |
+| A05 | Single-operator browser authentication and dashboard | implemented | Session/CSRF tests, real Chromium keyboard/review/export journeys and screenshots |
 | A06 | Optional reviewed reports and Unicode fonts | implemented | CLI/API exports, old-schema compatibility, Latin/Arabic and missing-glyph tests |
-| A07 | Offline diagnostics and reproducible release dependencies | remaining | No-side-effect doctor tests; locked CI/container installation |
+| A07 | Offline diagnostics and reproducible release dependencies | implemented | Doctor side-effect checks, hash-locked installation, installed-wheel/offline container checks |
 | A08 | Paired-trial evaluation tooling | remaining | Cohort validation, unsuccessful-trial retention and arithmetic tests |
 | A09 | Live RPC and real manual timing evidence | awaiting validation | Operator input; mocks cannot satisfy acceptance |
 

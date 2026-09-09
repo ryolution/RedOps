@@ -1,0 +1,3 @@
+# Starlette 1.6 TestClient uses anyio.abc.BlockingPortal, deprecated in AnyIO 4.15.
+# Remove this bound after an upstream compatibility update passes pytest -W error.
+anyio>=4.14.2,<4.15

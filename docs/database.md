@@ -1,7 +1,6 @@
 # Database maintenance
 
-Maintenance runs through the local CLI under the operator's OS account. The API
-exposes assessment reads only. SQLite and PostgreSQL use the same portable archive
+Maintenance runs through the local CLI under the operator's OS account. The dashboard/API append finding review annotations; maintenance remains CLI-only. SQLite and PostgreSQL use the same portable archive
 format and maintenance commands:
 
 ```bash
@@ -21,7 +20,7 @@ sequences are adjusted so subsequent assessments can be inserted normally.
 ## Backups
 
 An archive contains all RedOps assessment snapshots, normalized observations,
-findings, action records, and the source schema marker. One consistent read
+findings, action records, append-only finding reviews, and the source schema marker. One consistent read
 transaction covers all tables. SQLite uses an explicit snapshot transaction;
 PostgreSQL uses repeatable-read isolation. Output is written completely before
 being published, and an existing archive path is never overwritten.
@@ -37,7 +36,7 @@ The limits are 64 MiB per archive and 100,000 total rows. Larger databases need
 native database backup tooling. The archive covers RedOps application tables,
 not other tables, database roles, grants, extensions, or server configuration.
 It excludes the separate JSONL audit file, NVD cache, exported reports, inventory
-XML, and scope files; include these in your deployment's backup policy separately.
+XML/JSON, evidence catalogs, and scope files; include these in your deployment's backup policy separately.
 Archives contain assessment data and are unencrypted. Store them with access
 controls and encryption appropriate to the engagement; keep copies off the host.
 
