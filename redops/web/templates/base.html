@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}RedOps{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('ui_static', path='redops-mark.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('ui_static', path='redops-mark.png') }}">
   <link rel="stylesheet" href="{{ url_for('ui_static', path='app.css') }}">
   <script defer src="{{ url_for('ui_static', path='app.js') }}"></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="brand" href="/ui"><span class="brandmark" aria-hidden="true">R</span>RedOps</a>
+<header class="topbar"><a class="brand" href="/ui"><img class="brandmark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="40" height="40" alt="" aria-hidden="true">RedOps</a>
   <span class="topnote">Assessment workspace</span>
   {% if session and session.authenticated %}<form action="/ui/logout" method="post" class="logout">
     <input type="hidden" name="csrf" value="{{ session.csrf }}">

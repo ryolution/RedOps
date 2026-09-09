@@ -5,12 +5,14 @@ import logging
 from collections import Counter
 from datetime import datetime
 from functools import lru_cache
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
 from fontTools.ttLib import TTFont
 from fpdf import FPDF
 
+from redops.core.branding import logo_bytes
 from redops.core.errors import InputError
 from redops.core.reviews import finding_key
 from redops.reporting.document import review_by_key
@@ -38,6 +40,8 @@ def font_text(value: object, *, bold: bool = False) -> str:
 
 class AssessmentPDF(FPDF):
     def header(self) -> None:
+        self.image(BytesIO(logo_bytes()), x=self.l_margin, y=self.t_margin, w=9, h=9)
+        self.set_x(self.l_margin + 12)
         self.set_font("DejaVu", "B", 15)
         self.set_text_color(160, 45, 45)
         self.cell(0, 10, "RedOps Assessment", new_x="LMARGIN", new_y="NEXT")

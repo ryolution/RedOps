@@ -17,6 +17,7 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
+from redops.core.branding import logo_data_uri
 from redops.core.errors import InputError
 from redops.core.io import atomic_write, read_bounded, require_distinct_paths
 
@@ -314,10 +315,12 @@ def _html(result: dict) -> str:
         "<!doctype html><html lang='en'><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width'>"
         "<meta http-equiv='Content-Security-Policy' "
-        "content=\"default-src 'none'; style-src 'unsafe-inline'\">"
+        "content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:\">"
         "<title>RedOps paired benchmark</title><style>body{font:16px/1.5 system-ui;margin:2rem;"
         "color:#182531}table{border-collapse:collapse}td,th{padding:.6rem;border:1px solid #ccc;"
-        "text-align:left;overflow-wrap:anywhere}.scroll{overflow:auto}p{overflow-wrap:anywhere}</style>"
+        "text-align:left;overflow-wrap:anywhere}.scroll{overflow:auto}p{overflow-wrap:anywhere}"
+        ".brand{display:flex;align-items:center;gap:.7rem;font-weight:700}</style>"
+        f'<p class="brand"><img src="{logo_data_uri()}" width="40" height="40" alt="">RedOps</p>'
         f"<h1>RedOps paired assessment benchmark</h1><p>{text(result['basis'])}</p>"
         f"<p>{text(result['task_scope'])}</p><p>{text(result['comparison_basis'])}</p>"
         "<p>Cache, environment and operator cohorts are evaluated separately. "

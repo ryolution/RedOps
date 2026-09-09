@@ -30,6 +30,7 @@ REQUIRED_FILES = (
     "web/templates/macros.html",
     "web/static/app.css",
     "web/static/app.js",
+    "web/static/redops-mark.png",
     "reporting/fonts/DejaVuSans.ttf",
     "reporting/fonts/DejaVuSans-Bold.ttf",
     "reporting/fonts/LICENSE.txt",

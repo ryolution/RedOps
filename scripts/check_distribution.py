@@ -16,6 +16,7 @@ ASSETS = (
     "redops/web/templates/finding.html",
     "redops/web/static/app.css",
     "redops/web/static/app.js",
+    "redops/web/static/redops-mark.png",
     "redops/reporting/fonts/DejaVuSans.ttf",
     "redops/reporting/fonts/DejaVuSans-Bold.ttf",
     "redops/reporting/fonts/LICENSE.txt",

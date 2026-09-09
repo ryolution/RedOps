@@ -2,6 +2,7 @@
 {% block title %}Sign in · RedOps{% endblock %}
 {% block content %}
 <section class="login-card">
+  <img class="login-mark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="64" height="64" alt="" aria-hidden="true">
   <p class="eyebrow">Your assessment workspace</p><h1>Review with context.</h1>
   <p class="lead">Inventory, evidence, and operator decisions in one place.</p>
   {% if expired %}<p class="notice" role="status">Your session expired. Sign in again to continue.</p>{% endif %}

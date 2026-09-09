@@ -38,7 +38,7 @@ redops = "redops.cli.main:main"
 include = ["redops*"]
 
 [tool.setuptools.package-data]
-redops = ["web/templates/*.html", "web/static/*.css", "web/static/*.js", "reporting/fonts/*"]
+redops = ["web/templates/*.html", "web/static/*.css", "web/static/*.js", "web/static/*.png", "reporting/fonts/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

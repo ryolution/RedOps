@@ -7,6 +7,7 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
+from redops.core.branding import logo_data_uri
 from redops.core.io import atomic_write
 from redops.core.reviews import finding_key
 from redops.reporting.document import review_by_key
@@ -114,7 +115,8 @@ def render_html(document: dict[str, Any]) -> str:
     )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
 <title>RedOps Assessment {text(document["id"])}</title>
 <style>
 :root {{ color-scheme: light; font-family: system-ui, sans-serif;
@@ -122,6 +124,7 @@ color: #172536; background: #edf1f5; }}
 body {{ margin: 0; }} main {{ max-width: 1120px; margin: auto; padding: 2rem; }}
 header {{ border-top: 5px solid #ce493f; padding: 1rem 0; }} h1 {{ font-size: 2.4rem; }}
 .eyebrow {{ letter-spacing: .18em; font-size: .8rem; font-weight: 700; color: #a52f2f; }}
+.report-brand {{ display: flex; align-items: center; gap: .7rem; }}
 .cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: .8rem; }}
 .card, .finding {{ background: white; padding: 1.2rem;
 border: 1px solid #dce2e9; border-radius: 8px; }}
@@ -135,7 +138,8 @@ footer {{ font-size: .8rem; overflow-wrap: anywhere; color: #526172; margin-top:
 @media print {{ body {{ background: white; }} main {{ padding: 0; }}
 .finding {{ break-inside: avoid; }} }}
 </style></head><body><main>
-<header><p class="eyebrow">REDOPS / ASSESSMENT</p><h1>Inventory &amp; vulnerability evidence</h1>
+<header><p class="eyebrow report-brand"><img src="{logo_data_uri()}" width="40" height="40"
+alt="">REDOPS / ASSESSMENT</p><h1>Inventory &amp; vulnerability evidence</h1>
 <p>{text(document["scope"]["engagement"])} · {text(document["created_at"])} ·
 {text(document["status"])}</p></header>
 <aside class="notice"><ul>{warnings}</ul></aside>

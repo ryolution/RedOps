@@ -22,10 +22,11 @@ redops workflow run --scope labs/demo-scope.yaml --input labs/demo-nmap.xml \
 
 `check_distribution.py` checks wheel/source assets and runs the installed wheel
 from a temporary directory. It verifies the offline workflow, reports, dashboard
-login and backup restore. Fonts and notices are bundled; rendering never downloads
-resources. A runtime-only install uses the matching `-runtime.txt` and a previously
-built wheel. For air-gapped installation, first download all locked wheels into a
-wheelhouse, transfer the wheelhouse and RedOps wheel, then add
+login and backup restore. The [RedOps logo](branding.md), fonts and notices are
+bundled; rendering never downloads resources. A runtime-only install uses the
+matching `-runtime.txt` and a previously built wheel. For air-gapped installation,
+first download all locked wheels into a wheelhouse, transfer the wheelhouse and
+RedOps wheel, then add
 `--no-index --find-links /path/to/wheelhouse` to the locked install command.
 
 `redops doctor` reports package/file availability, configuration syntax and local
