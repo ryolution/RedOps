@@ -55,16 +55,23 @@ def screenshot(page, name):
         page.screenshot(path=str(path / (name + ".png")), full_page=True)
 
 
-def sign_in(page, origin):
+def sign_in(page, origin, capture=None):
     from playwright.sync_api import expect
 
     page.goto(origin + "/ui")
+    page.wait_for_load_state("load")
+    card = page.locator(".login-card").bounding_box()
+    viewport = page.viewport_size
+    assert abs(card["x"] + card["width"] / 2 - viewport["width"] / 2) < 2
+    assert abs(card["y"] + card["height"] / 2 - viewport["height"] / 2) < 2
+    if capture:
+        screenshot(page, "login-" + capture)
     page.keyboard.press("Tab")
     expect(page.get_by_role("link", name="Skip to content")).to_be_focused()
     page.get_by_label("Workspace token").focus()
     page.keyboard.type(TOKEN)
     page.keyboard.press("Enter")
-    expect(page.get_by_role("heading", name="Assessment history")).to_be_visible()
+    expect(page.get_by_role("heading", name="Assessments", level=1)).to_be_visible()
 
 
 @pytest.mark.parametrize("width,name", [(1440, "desktop"), (390, "mobile")])
@@ -85,7 +92,9 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
 
     page.route("**/*", route)
     page.set_viewport_size({"width": width, "height": 900})
-    sign_in(page, origin)
+    sign_in(page, origin, name)
+    page.wait_for_load_state("load")
+    screenshot(page, "history-" + name)
     page.get_by_role("link", name=document["scope"]["engagement"], exact=True).focus()
     page.keyboard.press("Enter")
     expect(page.get_by_role("heading", name="Inventory", exact=True)).to_be_visible()
@@ -102,7 +111,7 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     finding.focus()
     page.keyboard.press("Enter")
     page.get_by_label("Disposition").select_option("not_affected")
-    page.get_by_label("Evidence and reasoning").fill(
+    page.get_by_label("Notes", exact=True).fill(
         "Synthetic review: vendor backport confirmed. café مرحبا"
     )
     page.get_by_role("button", name="Save review").focus()
@@ -121,8 +130,16 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     screenshot(page, "review-" + name)
     page.locator("a.back").click()
     page.get_by_label("Review", exact=True).select_option("not_affected")
-    page.get_by_role("button", name="Apply filters").click()
+    page.get_by_role("button", name="Filter", exact=True).click()
     expect(page.get_by_role("link", name="DEMO-WEB-001", exact=True)).to_have_count(1)
+    menu = page.locator(".export-menu > summary")
+    menu.focus()
+    page.keyboard.press("Enter")
+    expect(page.get_by_role("link", name="JSON", exact=True)).to_be_visible()
+    page.keyboard.press("Escape")
+    expect(page.get_by_role("link", name="JSON", exact=True)).not_to_be_visible()
+    expect(menu).to_be_focused()
+    page.keyboard.press("Enter")
     for format_name in ("JSON", "HTML", "PDF"):
         with page.expect_download() as pending:
             page.get_by_role("link", name=format_name, exact=True).click()
@@ -161,7 +178,7 @@ def test_pagination_escaped_content_and_expired_session(page, server, settings):
     page.get_by_role("link", name="Next").click()
     expect(page.locator("tbody tr")).to_have_count(3)
     page.get_by_label("Engagement", exact=True).fill(copy["scope"]["engagement"])
-    page.get_by_role("button", name="Apply filter").click()
+    page.get_by_role("button", name="Filter", exact=True).click()
     expect(page.locator("tbody tr")).to_have_count(1)
     assert page.evaluate("window.importExecuted") is None
     page.get_by_role("link", name=copy["scope"]["engagement"], exact=True).click()
@@ -169,4 +186,4 @@ def test_pagination_escaped_content_and_expired_session(page, server, settings):
     assert page.evaluate("window.importExecuted") is None
     app.state.browser_sessions.clock = lambda: time.monotonic() + 1801
     page.goto(origin + "/ui")
-    expect(page.get_by_text("Your session expired. Sign in again to continue.")).to_be_visible()
+    expect(page.get_by_text("Session expired. Sign in again.")).to_be_visible()

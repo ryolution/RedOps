@@ -91,8 +91,9 @@ bash scripts/check.sh
 ```
 
 Browser tests run against a disposable loopback server and synthetic assessments.
-They cover keyboard login/navigation/review, desktop and 390-pixel layouts, local
-assets, filters, pagination, escaped imports, session expiry and all downloads.
+They cover centered login, keyboard navigation/review, desktop and 390-pixel
+layouts, local assets, filters, pagination, escaped imports, session expiry and
+all downloads through the export menu, including Escape and focus restoration.
 The [desktop assessment](images/dashboard-desktop.png),
 [narrow assessment](images/dashboard-mobile.png),
 [desktop review](images/review-desktop.png) and

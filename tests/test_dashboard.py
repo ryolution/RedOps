@@ -34,7 +34,7 @@ def login(client):
     page = client.get("/ui/login")
     assert page.status_code == 200
     response = client.post("/ui/login", data={"csrf": csrf(page), "token": TOKEN})
-    assert response.status_code == 200 and "Assessment history" in response.text
+    assert response.status_code == 200 and "<h1>Assessments</h1>" in response.text
     return response
 
 
@@ -47,7 +47,7 @@ def test_full_browser_http_journey_and_api_isolation(client, document, settings)
     assert "Candidate findings" in page.text and "Inventory" in page.text
     path = re.search(r'href="(/ui/assessments/[^"]+/findings/[a-f0-9]+)"', page.text).group(1)
     page = client.get(path)
-    assert "Record a decision" in page.text
+    assert "<h2>Review</h2>" in page.text
     response = client.post(
         path + "/reviews",
         data={
@@ -115,7 +115,7 @@ def test_login_rotation_cookie_flags_expiry_and_restart(client, settings):
     assert "httponly" in cookie and "samesite=strict" in cookie and "path=/ui" in cookie
     assert TOKEN not in cookie
     now[0] += 1800
-    assert "Your session expired" in client.get("/ui").text
+    assert "Session expired" in client.get("/ui").text
     app = create_app(settings, token=TOKEN, allow_http_ui=True)
     with TestClient(app, base_url="http://127.0.0.1", cookies=client.cookies) as fresh:
         assert "Sign in" in fresh.get("/ui").text
@@ -145,8 +145,8 @@ def test_https_required_and_secure_cookie(settings, document):
 def test_search_filter_and_missing_record(client, document):
     login(client)
     root = f"/ui/assessments/{document['id']}"
-    assert "No inventory observations match" in client.get(root + "?q=does-not-exist").text
-    assert "No candidates match" in client.get(root + "?severity=critical").text
+    assert "No matching inventory" in client.get(root + "?q=does-not-exist").text
+    assert "No matching candidates" in client.get(root + "?severity=critical").text
     assert client.get(root + "?severity=invalid").status_code == 422
     assert client.get(root + "?findings_page=-1").status_code == 422
     assert client.get("/ui/assessments/not-a-uuid").status_code == 422

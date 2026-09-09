@@ -1,19 +1,18 @@
 {% extends 'base.html' %}{% from 'macros.html' import pages %}
 {% block title %}Assessments · RedOps{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">Evidence library</p><h1>Assessments</h1>
-<p class="lead">Explore recorded inventory and review candidate findings.</p></div><span class="tag">Single operator</span></div>
+<div class="page-heading"><h1>Assessments</h1></div>
 <section class="panel">
-<form class="filters" method="get" action="/ui"><div class="field"><label for="engagement">Engagement</label>
-  <input id="engagement" name="engagement" maxlength="200" value="{{ engagement }}" placeholder="All engagements"></div>
-  <button type="submit">Apply filter</button>{% if engagement %}<a class="button secondary" href="/ui">Clear</a>{% endif %}
+<form class="filters history-filter" method="get" action="/ui"><div class="field grow"><label class="visually-hidden" for="engagement">Engagement</label>
+  <div class="search-input">{{ icon('search') }}<input id="engagement" name="engagement" maxlength="200" value="{{ engagement }}" placeholder="Engagement name"></div></div>
+  <button type="submit">Filter</button>{% if engagement %}<a class="button secondary" href="/ui">Clear</a>{% endif %}
 </form>
-{% if records %}<div class="section-heading"><h2>Assessment history</h2><span class="muted">{{ records|length }} on this page</span></div>
-<div class="table-wrap"><table><caption class="visually-hidden">Saved assessments</caption><thead><tr><th>Engagement</th><th>Recorded</th><th>Operator</th><th>Assessment</th></tr></thead>
+{% if records %}
+<div class="table-wrap" tabindex="0" role="region" aria-label="Assessment history table"><table><caption class="visually-hidden">Saved assessments</caption><thead><tr><th>Engagement</th><th>Recorded</th><th>Operator</th><th>Assessment</th></tr></thead>
 <tbody>{% for record in records %}<tr><td><a class="strong" href="/ui/assessments/{{ record.id }}">{{ record.engagement }}</a></td>
 <td><time>{{ record.created_at }}</time></td><td>{{ record.operator }}</td><td class="mono small">{{ record.id }}</td></tr>{% endfor %}</tbody></table></div>
 {{ pages(pagination) }}
-{% else %}<div class="empty"><span class="empty-symbol" aria-hidden="true">□</span><h2>No assessments yet</h2>
-<p>{% if engagement %}No saved assessments match this engagement.{% else %}Run an assessment with the CLI, then return here to review its evidence.{% endif %}</p></div>{% endif %}
+{% else %}<div class="empty"><span class="empty-symbol" aria-hidden="true">□</span><h2>{% if engagement %}No matches{% else %}No assessments yet{% endif %}</h2>
+{% if engagement %}<p>No matching engagements.</p>{% else %}<p>Import an assessment with the CLI.</p>{% endif %}</div>{% endif %}
 </section>
 {% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Request unavailable · RedOps{% endblock %}
-{% block content %}<section class="panel error-panel"><p class="eyebrow">Request status {{ error_status }}</p>
-<h1>{% if error_status==409 %}A newer review is available{% elif error_status==503 %}Workspace unavailable{% elif error_status==404 %}Record not found{% else %}Request could not be completed{% endif %}</h1>
+{% block content %}<section class="panel error-panel"><span class="count">{{ error_status }}</span>
+<h1>{% if error_status==409 %}Review conflict{% elif error_status==503 %}Workspace unavailable{% elif error_status==404 %}Record not found{% else %}Request unavailable{% endif %}</h1>
 <p role="alert">{{ message }}</p>
-{% if unsaved_notes %}<h2>Your unsaved notes</h2><pre class="review-notes">{{ unsaved_notes }}</pre>{% endif %}
-<a class="button" href="{{ return_to or '/ui' }}">{% if return_to %}Reload finding{% else %}Return to assessments{% endif %}</a></section>{% endblock %}
+{% if unsaved_notes %}<h2>Unsaved notes</h2><pre class="review-notes">{{ unsaved_notes }}</pre>{% endif %}
+<a class="button" href="{{ return_to or '/ui' }}">{% if return_to %}Reload finding{% else %}Assessments{% endif %}</a></section>{% endblock %}

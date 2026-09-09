@@ -17,15 +17,25 @@ inventory, filter candidate findings by severity or latest review disposition,
 and inspect scope, input provenance, evidence and coverage limitations. Lists
 contain 25 records per page. Select a finding to append an attributable decision
 and read its history. Concurrent edits return a conflict page that retains the
-unsaved notes for copying before reloading. Reports download as JSON, HTML or PDF. The **Export with reviews** form adds
-the latest decisions with an export timestamp and review revision. The three
-format links export the original assessment without annotations.
+unsaved notes for copying before reloading. Open **Export** for JSON, HTML or PDF
+downloads. The **Original** links export the immutable assessment. **Export with
+reviews** adds the latest decisions with an export timestamp and review revision.
+Press Escape or click outside the menu to close it. **Assessment details** contains
+scope, provenance, and interpretation; a finding's **Technical details** contains
+matched CPEs, catalog source, and remediation.
 
-Forms have visible labels, keyboard focus indicators, and a skip-to-content link.
-Tables scroll within their panels on narrow screens. CSS and JavaScript are
+Controls have accessible labels, keyboard focus indicators, and a skip-to-content
+link. Tables can be focused and scrolled within their panels on narrow screens.
+The login card is centered in the viewport; the logo appears without a wordmark.
+The dark glass layout uses solid fallbacks for reduced transparency and browsers
+without blur support. CSS and JavaScript are
 packaged locally; browsing and report generation require no external assets.
 Dashboard writes are limited to finding reviews. Collection, imports, migration,
 backup and retention use the CLI.
+
+See the [desktop history](images/history-desktop.png),
+[mobile history](images/history-mobile.png), and [branding guide](branding.md) for
+the current layout and design references.
 
 ## Sessions and deployment
 

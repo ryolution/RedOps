@@ -1,3 +1,4 @@
+{% from 'macros.html' import icon %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -8,21 +9,21 @@
   <link rel="stylesheet" href="{{ url_for('ui_static', path='app.css') }}">
   <script defer src="{{ url_for('ui_static', path='app.js') }}"></script>
 </head>
-<body>
+<body class="{% block body_class %}{% if session and session.authenticated %}workspace-page{% else %}auth-page{% endif %}{% endblock %}">
 <a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="brand" href="/ui"><img class="brandmark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="40" height="40" alt="" aria-hidden="true">RedOps</a>
-  <span class="topnote">Assessment workspace</span>
-  {% if session and session.authenticated %}<form action="/ui/logout" method="post" class="logout">
+{% if session and session.authenticated %}
+<header class="topbar">
+  <a class="brand" href="/ui" aria-label="RedOps home"><img class="brandmark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="52" height="52" alt=""></a>
+  <nav aria-label="Main navigation"><a class="navitem" href="/ui" {% if request.url.path == '/ui' %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Assessments</span></a></nav>
+  <form action="/ui/logout" method="post" class="logout">
     <input type="hidden" name="csrf" value="{{ session.csrf }}">
-    <span class="operator">{{ operator }}</span><button class="quiet" type="submit">Sign out</button>
-  </form>{% endif %}
+    <span class="operator">{{ operator }}</span>
+    <button class="quiet icon-button" type="submit" aria-label="Sign out" title="Sign out">{{ icon('logout') }}</button>
+  </form>
 </header>
+{% endif %}
 <div class="layout">
-{% if session and session.authenticated %}<aside class="sidebar"><p class="eyebrow">Workspace</p>
-  <a class="navitem" href="/ui">Assessments <span aria-hidden="true">↗</span></a>
-  <div class="sidebar-note"><span class="dot" aria-hidden="true"></span>Operator review enabled<p>Evidence stays attached to its original assessment.</p></div>
-</aside>{% endif %}
-<main id="main" class="main">{% block content %}{% endblock %}</main>
+<main id="main" class="main" tabindex="-1">{% block content %}{% endblock %}</main>
 </div>
 <div id="copy-status" role="status" class="toast" hidden></div>
 </body></html>

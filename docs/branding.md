@@ -3,7 +3,8 @@
 <img src="../redops/web/static/redops-mark.png" alt="RedOps mark" width="160" height="160">
 
 The RedOps mark is a crimson geometric R with an open counter and a diagonal
-leg. Use the name **RedOps** alongside the mark, without a release number.
+leg. Use the mark alone in the application, with no adjacent wordmark or tagline.
+The project name remains **RedOps**, without a release number.
 
 ## Asset and integration
 
@@ -12,19 +13,36 @@ The master asset is [redops-mark.png](../redops/web/static/redops-mark.png), a
 The color direction is crimson (`#E4475C`); the generated image contains slight
 color variation. Preserve its square proportions and transparency.
 
-- The dashboard header pairs the mark with the text wordmark. The login screen,
-  browser icon, and touch icon use the same local asset.
+- The dashboard header and centered login screen use the mark alone. The browser
+  icon and touch icon use the same local asset.
 - HTML assessment and paired benchmark reports embed the PNG as a data URI.
   PDF assessments embed it in the page header. Exports remain self-contained.
 - The README uses the repository asset. The wheel and source distribution
   include it, and `redops doctor` checks that it is present.
 
-Decorative marks beside text have empty alternative text so screen readers
-announce the name once. Use `alt="RedOps"` when the image is the only label.
+The header link has the accessible name `RedOps home`; its image has empty
+alternative text. The standalone login mark uses `alt="RedOps"`. These accessible
+names do not add a visible wordmark.
 See the [desktop dashboard](images/dashboard-desktop.png) and
 [mobile dashboard](images/dashboard-mobile.png), plus the
 [desktop login](images/login-desktop.png) and [mobile login](images/login-mobile.png),
 for examples. Screenshots contain synthetic fixtures or an empty sign-in form.
+
+## Interface direction
+
+The application uses dark translucent panels, thin highlights, crimson accents,
+and a quiet gradient background. The login card is centered horizontally and
+vertically, including its logo, heading, field, and button. The assessment pages
+use short titles; provenance and interpretation live in expandable details.
+
+Visual references: [Rehab Attia's Glass Morphism dashboard on Behance](https://www.behance.net/gallery/162954891/Dashboard-Interface-Glass-Morphism)
+and [Orchids Creative's glass login reference on Pinterest](https://in.pinterest.com/pin/590604938669673611/).
+These informed the translucent surfaces and centered composition. RedOps uses its
+own CSS and assets; reference artwork is not bundled or loaded by the application.
+
+The layout uses system fonts and local assets. Solid surfaces replace blur when
+unsupported or when reduced transparency is requested; reduced motion and forced
+colors are also supported.
 
 ## Generation record
 

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}Sign in · RedOps{% endblock %}
+{% block body_class %}auth-page{% endblock %}
 {% block content %}
-<section class="login-card">
-  <img class="login-mark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="64" height="64" alt="" aria-hidden="true">
-  <p class="eyebrow">Your assessment workspace</p><h1>Review with context.</h1>
-  <p class="lead">Inventory, evidence, and operator decisions in one place.</p>
-  {% if expired %}<p class="notice" role="status">Your session expired. Sign in again to continue.</p>{% endif %}
+<section class="login-card" aria-labelledby="login-title">
+  <img class="login-mark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="96" height="96" alt="RedOps">
+  <h1 id="login-title">Sign in</h1>
+  {% if expired %}<p class="notice" role="status">Session expired. Sign in again.</p>{% endif %}
   {% if login_error %}<p class="notice danger" role="alert">{{ login_error }}</p>{% endif %}
   <form action="/ui/login" method="post" class="stack">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -13,6 +13,5 @@
     <input id="token" name="token" type="password" maxlength="4096" required autocomplete="current-password">
     <button type="submit">Sign in</button>
   </form>
-  <p class="muted small">Use the token configured for this RedOps workspace. Sessions expire after 30 minutes.</p>
 </section>
 {% endblock %}

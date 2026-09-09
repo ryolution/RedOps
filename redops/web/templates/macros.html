@@ -5,3 +5,15 @@
   {% if pagination.next %}<a class="button secondary" href="{{ pagination.next }}">Next</a>{% endif %}
 </nav>
 {% endmacro %}
+
+{% macro icon(name) -%}
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{% if name == 'grid' %}<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>
+{% elif name == 'logout' %}<path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M14 8l4 4-4 4M8 12h12"/>
+{% elif name == 'download' %}<path d="M12 3v12m-4-4 4 4 4-4M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+{% elif name == 'arrow' %}<path d="m10 5-7 7 7 7M3 12h18"/>
+{% elif name == 'search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>
+{% elif name == 'filter' %}<path d="M4 7h16M7 12h10M10 17h4"/>
+{% endif %}
+</svg>
+{%- endmacro %}
