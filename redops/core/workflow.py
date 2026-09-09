@@ -16,8 +16,9 @@ from redops.core.io import read_bounded, require_distinct_paths
 from redops.core.scope import load_scope
 from redops.database.repository import Repository
 from redops.intelligence.advisories import AdvisoryProvider
-from redops.intelligence.cve import load_catalog
+from redops.intelligence.cve import catalog_warnings, load_catalog
 from redops.intelligence.matcher import correlate
+from redops.recon.json_inventory import parse_inventory_json
 from redops.recon.source import InventoryParser, NmapXmlParser
 
 
@@ -30,6 +31,7 @@ def run_assessment(
     dry_run: bool = False,
     inventory_parser: InventoryParser | None = None,
     advisory_provider: AdvisoryProvider | None = None,
+    input_format: str = "nmap-xml",
 ) -> dict[str, Any]:
     if dry_run and advisory_provider is not None:
         raise RedOpsError("Dry-run cannot invoke advisory providers; use a local evidence catalog.")
@@ -44,7 +46,21 @@ def run_assessment(
         scope = load_scope(scope_path)
         operator = scope.operator
         xml = read_bounded(xml_path)
-        hosts = (inventory_parser or NmapXmlParser()).parse(xml)
+        source_metadata = {
+            "input_format": input_format,
+            "input_sha256": hashlib.sha256(xml).hexdigest(),
+        }
+        if input_format == "inventory-json":
+            if inventory_parser is not None:
+                raise RedOpsError("Custom parser injection cannot be combined with inventory-json.")
+            imported = parse_inventory_json(xml)
+            hosts = imported.hosts
+            source_metadata.update(source=imported.source, collected_at=imported.collected_at)
+        elif input_format == "nmap-xml":
+            hosts = (inventory_parser or NmapXmlParser()).parse(xml)
+            source_metadata["nmap_sha256"] = hashlib.sha256(xml).hexdigest()
+        else:
+            raise RedOpsError("Unsupported inventory input format.")
         if not hosts:
             raise RedOpsError("The inventory provider returned no hosts.")
         scope.validate(hosts)
@@ -68,6 +84,7 @@ def run_assessment(
             "CPE/banner matches are candidates requiring review, not confirmed vulnerabilities.",
             "No match does not establish that a service is secure; catalog coverage is limited.",
         ]
+        warnings.extend(catalog_warnings(catalog))
         if catalog.kind == "synthetic":
             warnings.append("Synthetic demonstration evidence; these are not real CVE findings.")
         missing = coverage["services_total"] - coverage["services_with_supported_cpe"]
@@ -80,7 +97,7 @@ def run_assessment(
             "status": "preview" if dry_run else "completed",
             "scope": scope.snapshot(),
             "provenance": {
-                "nmap_sha256": hashlib.sha256(xml).hexdigest(),
+                **source_metadata,
                 "catalog_sha256": hashlib.sha256(catalog_bytes).hexdigest(),
                 "catalog_kind": catalog.kind,
                 "catalog_updated_at": catalog.updated_at,

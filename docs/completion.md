@@ -57,8 +57,8 @@ not delivered; **excluded** = outside the approved implementation scope.
 | ID | Deliverable | Status | Evidence / gate |
 | --- | --- | --- | --- |
 | A01 | Portable backup/restore, explicit migration, retention | implemented | Maintenance and live PostgreSQL tests; `docs/database.md` |
-| A02 | Normalized JSON inventory with provenance | remaining | XML/JSON equivalence and invalid-input tests |
-| A03 | Catalog validation, freshness warnings and match explanation | remaining | Catalog CLI and coverage tests |
+| A02 | Normalized JSON inventory with provenance | implemented | XML/JSON equivalence and invalid-input tests |
+| A03 | Catalog validation, freshness warnings and match explanation | implemented | Catalog CLI and coverage tests |
 | A04 | Append-only finding reviews and stale-edit protection | remaining | CLI/API, migration, backup/retention and concurrency tests |
 | A05 | Single-operator browser authentication and dashboard | remaining | Session/CSRF tests and browser acceptance |
 | A06 | Optional reviewed reports and Unicode fonts | remaining | Old/new report compatibility and multilingual rendering |

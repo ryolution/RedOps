@@ -13,7 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from redops.core.audit import AuditLog
 from redops.core.config import Settings
 from redops.core.errors import RedOpsError
-from redops.core.io import require_distinct_paths
+from redops.core.io import read_bounded, require_distinct_paths
 from redops.core.workflow import run_assessment
 from redops.database.maintenance import (
     backup_database,
@@ -24,6 +24,7 @@ from redops.database.maintenance import (
 )
 from redops.database.repository import Repository
 from redops.intelligence.advisories import AdvisoryProvider, MockAdvisoryProvider
+from redops.intelligence.cve import validate_catalog
 from redops.intelligence.nvd import CachedAdvisoryProvider, NvdClient
 from redops.metasploit.health import HealthProvider, MockMetasploitClient
 from redops.metasploit.rpc import MetasploitClient
@@ -87,6 +88,9 @@ def parser() -> argparse.ArgumentParser:
     for command in (run, analyze):
         command.add_argument("--scope", type=Path, required=True)
         command.add_argument("--input", type=Path, required=True, help="Existing Nmap XML file")
+        command.add_argument(
+            "--input-format", choices=["nmap-xml", "inventory-json"], default="nmap-xml"
+        )
         command.add_argument("--catalog", type=Path, required=True, help="Reviewed evidence JSON")
         command.add_argument(
             "--dry-run", action="store_true", help="Preview; only audit events are written"
@@ -106,9 +110,11 @@ def parser() -> argparse.ArgumentParser:
         "--mock", action="store_true", help="Use an explicitly marked offline fixture"
     )
     intelligence = commands.add_parser("intelligence", help="CVE advisory lookup")
-    lookup = intelligence.add_subparsers(dest="intelligence_command", required=True).add_parser(
-        "lookup"
-    )
+    intelligence_commands = intelligence.add_subparsers(dest="intelligence_command", required=True)
+    lookup = intelligence_commands.add_parser("lookup")
+    catalog = intelligence_commands.add_parser("catalog")
+    validate = catalog.add_subparsers(dest="catalog_command", required=True).add_parser("validate")
+    validate.add_argument("--input", type=Path, required=True)
     lookup.add_argument("--cve", required=True)
     sources = lookup.add_mutually_exclusive_group()
     sources.add_argument("--mock", action="store_true")
@@ -137,6 +143,8 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     if args.command == "report":
         protected_paths.append(args.output)
     elif args.command == "benchmark":
+        protected_paths.append(args.input)
+    elif args.command == "intelligence" and args.intelligence_command == "catalog":
         protected_paths.append(args.input)
     require_distinct_paths(protected_paths)
     if args.command == "database":
@@ -185,6 +193,7 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
             args.catalog,
             dry_run=args.dry_run,
             advisory_provider=provider,
+            input_format=args.input_format,
         )
         if args.output_dir:
             try:
@@ -213,6 +222,8 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
                 raise RedOpsError("API port must be between 1 and 65535.")
             uvicorn.run(create_app(settings), host=args.host, port=args.port, access_log=False)
             result = {"status": "stopped"}
+        elif args.command == "intelligence" and args.intelligence_command == "catalog":
+            result = validate_catalog(read_bounded(args.input))
         elif args.command == "intelligence":
             advisory_source: AdvisoryProvider = (
                 MockAdvisoryProvider()

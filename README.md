@@ -58,6 +58,8 @@ contacts external services or writes database/report files.
 
 - [Architecture and repository boundaries](docs/architecture.md)
 - [Installation, CLI, configuration, and deployment](docs/installation.md)
+- [Inventory evidence formats](docs/inventory.md)
+- [Requirement and acceptance record](docs/completion.md)
 - [Authenticated API](docs/api.md)
 - [Database backup, restore, migration, and retention](docs/database.md)
 - [Synthetic demonstration and benchmark protocol](labs/README.md)

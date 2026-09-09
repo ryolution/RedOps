@@ -4,7 +4,7 @@ import json
 import math
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from urllib.parse import urlsplit
 
 from redops.core.errors import InputError
@@ -48,6 +48,28 @@ class Catalog:
     kind: str
     updated_at: str
     records: tuple[Evidence, ...]
+
+
+def catalog_warnings(catalog: Catalog, *, now: datetime | None = None) -> list[str]:
+    age = ((now or datetime.now(UTC)) - datetime.fromisoformat(catalog.updated_at)).total_seconds()
+    if age < 0:
+        return ["Catalog update time is in the future; review its provenance."]
+    if age > 30 * 86400:
+        return ["Catalog is older than 30 days; review evidence freshness. Records were retained."]
+    return []
+
+
+def validate_catalog(content: bytes) -> dict:
+    catalog = load_catalog(content)
+    return {
+        "status": "validated",
+        "kind": catalog.kind,
+        "updated_at": catalog.updated_at,
+        "records": len(catalog.records),
+        "supported_cpes": len({cpe for record in catalog.records for cpe in record.cpes}),
+        "warnings": catalog_warnings(catalog),
+        "matching_policy": "Exact reviewed CPE evidence; ambiguous identities remain unresolved.",
+    }
 
 
 def load_catalog(content: bytes) -> Catalog:
