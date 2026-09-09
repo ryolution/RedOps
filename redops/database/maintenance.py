@@ -18,19 +18,19 @@ from redops.database.archive import export_archive, load_archive, restore_rows
 from redops.database.models import (
     ActionRecord,
     Assessment,
-    Base,
+    FindingReview,
     HostRecord,
-    SchemaVersion,
     ServiceRecord,
     VulnerabilityRecord,
 )
 from redops.database.repository import Repository
 from redops.database.schema import (
     CURRENT_SCHEMA,
-    HISTORY_INDEX,
     lock_tables,
     schema_version,
+    tables_for_schema,
     transaction,
+    upgrade_schema,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,9 +41,11 @@ def _audited(
     action: str,
     paths: list[Path],
     operation: Callable[[], dict[str, Any]],
+    *,
+    operator: str | None = None,
 ) -> dict[str, Any]:
     require_distinct_paths([*settings.storage_paths(), *paths])
-    audit, operator = AuditLog(settings.audit_path), getpass.getuser()
+    audit, operator = AuditLog(settings.audit_path), operator or getpass.getuser()
     audit.record(action, "started", operator=operator)
     committed = False
     try:
@@ -107,7 +109,7 @@ def database_status(settings: Settings) -> dict[str, Any]:
             version = schema_version(connection)
             counts = {
                 table.name: connection.scalar(select(func.count()).select_from(table))
-                for table in Base.metadata.sorted_tables
+                for table in tables_for_schema(version)
             }
             return {
                 "status": "checked",
@@ -133,13 +135,7 @@ def migrate_database(settings: Settings, backup: Path) -> dict[str, Any]:
             if previous == CURRENT_SCHEMA:
                 return {"status": "unchanged", "schema_version": previous}
             archived = export_archive(connection, backup)
-            HISTORY_INDEX.create(connection, checkfirst=True)
-            connection.execute(
-                SchemaVersion.__table__.update()
-                .where(SchemaVersion.id == 1)
-                .values(version=CURRENT_SCHEMA)
-            )
-            schema_version(connection)
+            upgrade_schema(connection)
         return {
             "status": "completed",
             "from_schema": previous,
@@ -187,7 +183,7 @@ def prune_database(
         ):
             if apply:
                 lock_tables(connection)
-            schema_version(connection)
+            version = schema_version(connection)
             rows = connection.execute(
                 select(Assessment.id, Assessment.created_at)
                 .where(Assessment.engagement == engagement)
@@ -204,6 +200,10 @@ def prune_database(
             if apply and chosen:
                 assert backup is not None
                 archived = export_archive(connection, backup)
+                if version >= 3:
+                    connection.execute(
+                        delete(FindingReview).where(FindingReview.assessment_id.in_(chosen))
+                    )
                 host_ids = select(HostRecord.id).where(HostRecord.assessment_id.in_(chosen))
                 service_ids = select(ServiceRecord.id).where(ServiceRecord.host_id.in_(host_ids))
                 connection.execute(

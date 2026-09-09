@@ -7,9 +7,9 @@ from sqlalchemy import inspect, select
 from sqlalchemy.engine import Connection, Engine
 
 from redops.core.errors import RedOpsError
-from redops.database.models import Assessment, Base, SchemaVersion
+from redops.database.models import Assessment, Base, FindingReview, SchemaVersion
 
-CURRENT_SCHEMA = 2
+CURRENT_SCHEMA = 3
 HISTORY_INDEX = next(
     index
     for index in Assessment.__table__.indexes
@@ -38,29 +38,57 @@ def lock_tables(connection: Connection) -> None:
     """Serialize maintenance with assessment writes before reading affected rows."""
     if connection.dialect.name == "postgresql":
         # Static names only. SQLite's BEGIN IMMEDIATE already holds the writer lock.
+        extra = (
+            ", finding_reviews"
+            if "finding_reviews" in inspect(connection).get_table_names()
+            else ""
+        )
         connection.exec_driver_sql(
             "LOCK TABLE assessments, hosts, services, vulnerabilities, actions, schema_version "
-            "IN SHARE ROW EXCLUSIVE MODE"
+            + extra
+            + " IN SHARE ROW EXCLUSIVE MODE"
         )
+
+
+def tables_for_schema(version: int) -> list:
+    return [
+        table
+        for table in Base.metadata.sorted_tables
+        if version >= 3 or table.name != "finding_reviews"
+    ]
+
+
+def upgrade_schema(connection: Connection) -> None:
+    HISTORY_INDEX.create(connection, checkfirst=True)
+    FindingReview.__table__.create(connection, checkfirst=True)
+    connection.execute(
+        SchemaVersion.__table__.update().where(SchemaVersion.id == 1).values(version=CURRENT_SCHEMA)
+    )
+    schema_version(connection)
 
 
 def schema_version(connection: Connection) -> int:
     inspector = inspect(connection)
-    if not set(Base.metadata.tables).issubset(inspector.get_table_names()):
+    available = set(inspector.get_table_names())
+    if "schema_version" not in available:
         raise RedOpsError(
             "Database schema is missing or incompatible; an explicit migration is required."
         )
-    for table in Base.metadata.sorted_tables:
-        actual = {column["name"] for column in inspector.get_columns(table.name)}
-        if actual != set(table.columns.keys()):
-            raise RedOpsError("Database columns are incompatible with this installation.")
     rows = connection.execute(select(SchemaVersion.id, SchemaVersion.version)).all()
-    if len(rows) != 1 or rows[0].id != 1 or rows[0].version not in {1, CURRENT_SCHEMA}:
+    if len(rows) != 1 or rows[0].id != 1 or rows[0].version not in {1, 2, 3}:
         raise RedOpsError(
             "Database schema version is incompatible; an explicit migration is required."
         )
     version = rows[0].version
-    if version == CURRENT_SCHEMA:
+    if not {table.name for table in tables_for_schema(version)}.issubset(available):
+        raise RedOpsError(
+            "Database schema is missing required tables; an explicit migration is required."
+        )
+    for table in tables_for_schema(version):
+        actual = {column["name"] for column in inspector.get_columns(table.name)}
+        if actual != set(table.columns.keys()):
+            raise RedOpsError("Database columns are incompatible with this installation.")
+    if version >= 2:
         indexes = inspector.get_indexes("assessments")
         if not any(
             index["name"] == HISTORY_INDEX.name

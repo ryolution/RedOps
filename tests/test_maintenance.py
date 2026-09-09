@@ -21,7 +21,7 @@ from redops.database.maintenance import (
     prune_database,
     restore_database,
 )
-from redops.database.models import SchemaVersion
+from redops.database.models import FindingReview, SchemaVersion
 from redops.database.repository import Repository
 from redops.database.schema import HISTORY_INDEX, transaction
 
@@ -244,6 +244,7 @@ def downgrade_fixture(settings):
     try:
         with transaction(repository.engine, write=True) as connection:
             HISTORY_INDEX.drop(connection)
+            FindingReview.__table__.drop(connection)
             connection.execute(SchemaVersion.__table__.update().values(version=1))
     finally:
         repository.close()
@@ -260,7 +261,7 @@ def test_explicit_migration_is_backed_up_and_preserves_records(settings, populat
     assert database_status(settings)["upgrade_available"] is True
     backup = tmp_path / "before-migration.json"
     result = migrate_database(settings, backup)
-    assert result["from_schema"] == 1 and result["schema_version"] == 2
+    assert result["from_schema"] == 1 and result["schema_version"] == 3
     assert load_archive(backup)["schema_version"] == 1
     assert database_status(settings)["rows"]["assessments"] == 4
     assert database_status(settings)["upgrade_available"] is False
@@ -347,6 +348,6 @@ def test_completed_maintenance_audit_failure_is_explicit(
 def test_maintenance_cli(settings, populated, tmp_path, capsys):
     prefix = ["--database", settings.database_url, "--audit", str(settings.audit_path), "database"]
     assert main([*prefix, "status"]) == 0
-    assert json.loads(capsys.readouterr().out)["schema_version"] == 2
+    assert json.loads(capsys.readouterr().out)["schema_version"] == 3
     assert main([*prefix, "backup", "--output", str(tmp_path / "backup.json")]) == 0
     assert json.loads(capsys.readouterr().out)["assessments"] == 4

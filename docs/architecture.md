@@ -76,8 +76,8 @@ and timestamps. `hosts`, `services`, and `vulnerabilities` preserve observations
 within each assessment. `actions` records committed workflow completion in the
 same transaction. Foreign keys and uniqueness constraints prevent orphaned or
 duplicate observations. SQLite is the default; a PostgreSQL SQLAlchemy URL and
-optional driver are supported. New databases use schema 2. Schema 1 remains
-compatible; an explicit, backed-up migration adds the engagement/history index.
+optional driver are supported. New databases use schema 3. Schemas 1 and 2 remain compatible; an explicit,
+backed-up migration adds the engagement/history index and finding review storage.
 Unknown versions fail. Portable table archives use consistent snapshots and
 bounded JSON. Restore requires empty tables, preserves observation identifiers,
 and repairs PostgreSQL serial sequences. Retention previews engagement-specific

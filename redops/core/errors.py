@@ -15,3 +15,7 @@ class ScopeError(RedOpsError):
 
 class AssessmentNotFound(RedOpsError):
     """The requested assessment does not exist."""
+
+
+class ReviewConflict(RedOpsError):
+    """Another review was saved after the operator's last read."""

@@ -14,6 +14,7 @@ from redops.core.audit import AuditLog
 from redops.core.config import Settings
 from redops.core.errors import RedOpsError
 from redops.core.io import read_bounded, require_distinct_paths
+from redops.core.reviews import DISPOSITIONS
 from redops.core.workflow import run_assessment
 from redops.database.maintenance import (
     backup_database,
@@ -23,6 +24,7 @@ from redops.database.maintenance import (
     restore_database,
 )
 from redops.database.repository import Repository
+from redops.database.reviews import add_review, list_reviews
 from redops.intelligence.advisories import AdvisoryProvider, MockAdvisoryProvider
 from redops.intelligence.cve import validate_catalog
 from redops.intelligence.nvd import CachedAdvisoryProvider, NvdClient
@@ -45,6 +47,24 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument("--verbose", action="store_true", help="Write operational logs to stderr")
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize an empty database with the current schema")
+    review = commands.add_parser("review", help="Inspect or append operator finding decisions")
+    reviews = review.add_subparsers(dest="review_command", required=True)
+    listing = reviews.add_parser("list")
+    listing.add_argument("--assessment", required=True)
+    listing.add_argument("--finding")
+    listing.add_argument("--limit", type=int, default=50)
+    listing.add_argument("--offset", type=int, default=0)
+    adding = reviews.add_parser("add")
+    adding.add_argument("--assessment", required=True)
+    adding.add_argument("--finding", required=True)
+    adding.add_argument("--disposition", choices=DISPOSITIONS, required=True)
+    adding.add_argument("--notes", default="")
+    adding.add_argument(
+        "--expected-previous",
+        type=int,
+        required=True,
+        help="Latest review ID, or 0 for the first decision",
+    )
     database = commands.add_parser("database", help="Backup, restore, migration, and retention")
     maintenance = database.add_subparsers(dest="database_command", required=True)
     maintenance.add_parser("status", help="Check schema compatibility and row counts")
@@ -147,6 +167,20 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     elif args.command == "intelligence" and args.intelligence_command == "catalog":
         protected_paths.append(args.input)
     require_distinct_paths(protected_paths)
+    if args.command == "review":
+        if args.review_command == "list":
+            return list_reviews(
+                settings, args.assessment, args.finding, limit=args.limit, offset=args.offset
+            )
+        return add_review(
+            settings,
+            args.assessment,
+            args.finding,
+            disposition=args.disposition,
+            notes=args.notes,
+            expected_previous=args.expected_previous,
+            operator=getpass.getuser(),
+        )
     if args.command == "database":
         if args.database_command == "status":
             return database_status(settings)

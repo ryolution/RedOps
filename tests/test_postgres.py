@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 
 from redops.core.config import Settings
+from redops.core.reviews import finding_key
 from redops.core.workflow import run_assessment
 from redops.database.maintenance import (
     backup_database,
@@ -20,6 +21,7 @@ from redops.database.maintenance import (
 )
 from redops.database.models import SchemaVersion
 from redops.database.repository import Repository
+from redops.database.reviews import add_review, list_reviews
 from redops.database.schema import HISTORY_INDEX, transaction
 
 
@@ -75,7 +77,17 @@ def test_postgres_portable_restore_sequences_migration_and_retention(settings, p
                 HISTORY_INDEX.drop(connection)
                 connection.execute(SchemaVersion.__table__.update().values(version=1))
             result = migrate_database(target, tmp_path / "pg-before-migrate.json")
-            assert result["schema_version"] == 2
+            assert result["schema_version"] == 3
+            for document in (preview, later):
+                add_review(
+                    target,
+                    document["id"],
+                    finding_key(document["id"], document["findings"][0]),
+                    disposition="affected",
+                    notes="Test operator review",
+                    expected_previous=0,
+                    operator="test-operator",
+                )
             result = prune_database(
                 target,
                 engagement=preview["scope"]["engagement"],
@@ -92,6 +104,7 @@ def test_postgres_portable_restore_sequences_migration_and_retention(settings, p
             )
             assert restore_database(restored, source)["restored_assessments"] == 1
             assert database_status(restored)["rows"] == database_status(target)["rows"]
+            assert list_reviews(restored, later["id"])["revision"] > 0
         finally:
             postgres.close()
     finally:

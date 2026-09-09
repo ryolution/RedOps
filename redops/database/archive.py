@@ -13,8 +13,9 @@ from sqlalchemy.engine import Connection
 
 from redops.core.errors import InputError
 from redops.core.io import atomic_write, read_bounded
-from redops.database.models import Base, SchemaVersion
-from redops.database.schema import CURRENT_SCHEMA, HISTORY_INDEX, schema_version
+from redops.core.reviews import DISPOSITIONS, finding_key
+from redops.database.models import Base
+from redops.database.schema import schema_version, tables_for_schema, upgrade_schema
 
 MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
 MAX_ARCHIVE_ROWS = 100000
@@ -30,7 +31,7 @@ def export_archive(connection: Connection, path: Path) -> dict[str, Any]:
     version = schema_version(connection)
     tables: dict[str, list[dict[str, Any]]] = {}
     size, count = 0, 0
-    for table in Base.metadata.sorted_tables:
+    for table in tables_for_schema(version):
         tables[table.name] = []
         for mapping in connection.execute(select(table).order_by(*table.primary_key)).mappings():
             row = dict(mapping)
@@ -42,7 +43,7 @@ def export_archive(connection: Connection, path: Path) -> dict[str, Any]:
                 )
             tables[table.name].append(row)
     try:
-        _validate_rows(tables)
+        _validate_rows(tables, version)
     except (ValueError, TypeError, KeyError, OverflowError) as exc:
         raise InputError(
             "Database rows exceed portable archive constraints; use native database backup tools."
@@ -78,11 +79,12 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _validate_rows(tables: Any) -> None:
-    if not isinstance(tables, dict) or set(tables) != set(Base.metadata.tables):
+def _validate_rows(tables: Any, version: int) -> None:
+    expected = tables_for_schema(version)
+    if not isinstance(tables, dict) or set(tables) != {table.name for table in expected}:
         raise ValueError
     count = 0
-    for table in Base.metadata.sorted_tables:
+    for table in expected:
         rows = tables[table.name]
         if not isinstance(rows, list):
             raise ValueError
@@ -122,6 +124,19 @@ def _validate_rows(tables: Any) -> None:
             document["scope"].get(key) != row[key] for key in ("operator", "engagement")
         ):
             raise ValueError
+    documents = {row["id"]: row["document"] for row in tables["assessments"]}
+    keys = {
+        identifier: {finding_key(identifier, item) for item in document["findings"]}
+        for identifier, document in documents.items()
+    }
+    for review in tables.get("finding_reviews", []):
+        if (
+            review["finding_key"] not in keys.get(review["assessment_id"], set())
+            or review["disposition"] not in DISPOSITIONS
+            or len(review["notes"]) > 10000
+            or datetime.fromisoformat(review["timestamp"]).tzinfo is None
+        ):
+            raise ValueError
 
 
 def load_archive(path: Path) -> dict[str, Any]:
@@ -147,7 +162,7 @@ def load_archive(path: Path) -> dict[str, Any]:
             or type(payload["archive_version"]) is not int
             or payload["archive_version"] != 1
             or type(payload["schema_version"]) is not int
-            or payload["schema_version"] not in {1, CURRENT_SCHEMA}
+            or payload["schema_version"] not in {1, 2, 3}
             or payload["source_backend"] not in {"sqlite", "postgresql"}
         ):
             raise ValueError
@@ -158,7 +173,7 @@ def load_archive(path: Path) -> dict[str, Any]:
             document["sha256"], expected
         ):
             raise ValueError
-        _validate_rows(payload["tables"])
+        _validate_rows(payload["tables"], payload["schema_version"])
         if payload["tables"]["schema_version"] != [{"id": 1, "version": payload["schema_version"]}]:
             raise ValueError
         return payload
@@ -170,23 +185,20 @@ def load_archive(path: Path) -> dict[str, Any]:
 
 def restore_rows(connection: Connection, payload: dict[str, Any]) -> int:
     """Restore into empty RedOps tables under a writer lock and a single transaction."""
-    schema_version(connection)
-    for table in Base.metadata.sorted_tables:
+    version = schema_version(connection)
+    for table in tables_for_schema(version):
         if table.name != "schema_version" and connection.scalar(
             select(func.count()).select_from(table)
         ):
             raise InputError(
                 "Restore requires an empty RedOps database; existing data is never replaced."
             )
+    upgrade_schema(connection)
     for table in Base.metadata.sorted_tables:
-        rows = payload["tables"][table.name]
+        rows = payload["tables"].get(table.name, [])
         if table.name != "schema_version":
             for start in range(0, len(rows), 500):
                 connection.execute(table.insert(), rows[start : start + 500])
-    HISTORY_INDEX.create(connection, checkfirst=True)
-    connection.execute(
-        SchemaVersion.__table__.update().where(SchemaVersion.id == 1).values(version=CURRENT_SCHEMA)
-    )
     schema_version(connection)
     if connection.dialect.name == "postgresql":
         for table in Base.metadata.sorted_tables:

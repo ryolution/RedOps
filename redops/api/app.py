@@ -1,5 +1,6 @@
 """Serve existing assessment data; no target scanning, uploads, or command execution."""
 
+import getpass
 import hmac
 import os
 from collections.abc import Callable
@@ -9,14 +10,23 @@ from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import SQLAlchemyError
 
 from redops.core.audit import AuditLog
 from redops.core.config import Settings
-from redops.core.errors import AssessmentNotFound, InputError, RedOpsError
+from redops.core.errors import AssessmentNotFound, InputError, RedOpsError, ReviewConflict
 from redops.core.io import require_distinct_paths
 from redops.database.repository import Repository
+from redops.database.reviews import add_review, list_reviews
 from redops.reporting.render import render_report
+
+
+class ReviewInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    disposition: Literal["needs_review", "affected", "not_affected", "accepted_risk", "remediated"]
+    notes: str = Field(max_length=10000)
+    expected_previous: int = Field(ge=0)
 
 
 def create_app(settings: Settings | None = None, *, token: str | None = None) -> FastAPI:
@@ -26,6 +36,9 @@ def create_app(settings: Settings | None = None, *, token: str | None = None) ->
         raise RedOpsError("REDOPS_API_TOKEN must contain between 32 and 4096 characters.")
     require_distinct_paths(settings.storage_paths())
     audit = AuditLog(settings.audit_path)
+    operator = os.environ.get("REDOPS_OPERATOR", getpass.getuser()).strip()
+    if not operator or len(operator) > 200 or "\x00" in operator:
+        raise RedOpsError("REDOPS_OPERATOR must be a nonempty name of at most 200 characters.")
     bearer = HTTPBearer(auto_error=False)
     app = FastAPI(title="RedOps", version="", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -84,6 +97,45 @@ def create_app(settings: Settings | None = None, *, token: str | None = None) ->
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "service": "RedOps"}
+
+    def review_operation(callback: Callable[[], Any]) -> Any:
+        try:
+            return callback()
+        except ReviewConflict as exc:
+            raise HTTPException(409, str(exc)) from exc
+        except AssessmentNotFound as exc:
+            raise HTTPException(404, "Assessment or finding not found.") from exc
+        except InputError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        except (SQLAlchemyError, RedOpsError, OSError) as exc:
+            raise HTTPException(
+                503, "Review or audit storage is unavailable; check schema migration."
+            ) from exc
+
+    @app.get(
+        "/assessments/{assessment_id}/findings/{key}/reviews", dependencies=[Depends(authenticate)]
+    )
+    def history(
+        assessment_id: UUID,
+        key: str,
+        limit: Annotated[int, Query(ge=1, le=100)] = 50,
+        offset: Annotated[int, Query(ge=0, le=1000000)] = 0,
+    ) -> dict[str, Any]:
+        return review_operation(
+            lambda: list_reviews(settings, str(assessment_id), key, limit=limit, offset=offset)
+        )
+
+    @app.post(
+        "/assessments/{assessment_id}/findings/{key}/reviews",
+        dependencies=[Depends(authenticate)],
+        status_code=201,
+    )
+    def review(assessment_id: UUID, key: str, body: ReviewInput) -> dict[str, Any]:
+        return review_operation(
+            lambda: add_review(
+                settings, str(assessment_id), key, **body.model_dump(), operator=operator
+            )
+        )
 
     @app.get("/ready", dependencies=[Depends(authenticate)])
     def ready() -> dict[str, str]:

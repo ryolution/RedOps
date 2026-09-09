@@ -75,3 +75,15 @@ class ActionRecord(Base):
     operator: Mapped[str] = mapped_column(String(200))
     action: Mapped[str] = mapped_column(String(50))
     status: Mapped[str] = mapped_column(String(40))
+
+
+class FindingReview(Base):
+    __tablename__ = "finding_reviews"
+    __table_args__ = (Index("ix_reviews_finding_history", "assessment_id", "finding_key", "id"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    assessment_id: Mapped[str] = mapped_column(ForeignKey("assessments.id"), index=True)
+    finding_key: Mapped[str] = mapped_column(String(64))
+    timestamp: Mapped[str] = mapped_column(String(40))
+    operator: Mapped[str] = mapped_column(String(200))
+    disposition: Mapped[str] = mapped_column(String(40))
+    notes: Mapped[str] = mapped_column(Text)

@@ -43,10 +43,11 @@ controls and encryption appropriate to the engagement; keep copies off the host.
 
 ## Schema upgrades
 
-New databases initialize with schema 2. Existing schema 1 databases remain
+New databases initialize with schema 3. Existing schema 1 and 2 databases remain
 readable and writable without an implicit upgrade. The explicit migration adds
 a composite index on engagement, creation time, and assessment ID to support
-filtered history queries. It preserves all snapshots and observations:
+filtered history queries, then adds the append-only finding review table.
+It preserves all snapshots and observations:
 
 ```bash
 redops database status

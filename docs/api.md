@@ -1,7 +1,8 @@
 # Assessment API
 
-The API reads assessments created by the CLI. It offers no target operations,
-uploads, mutations, or arbitrary command interface.
+The API reads assessments created by the CLI and appends operator review
+annotations. Collection and database maintenance remain CLI operations.
+See [finding reviews](reviews.md) for the authenticated annotation routes.
 
 ```bash
 export REDOPS_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
