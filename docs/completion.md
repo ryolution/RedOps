@@ -50,7 +50,7 @@ not delivered; **excluded** = outside the approved implementation scope.
 | O34 / 11, final | Demonstrated greater-than-60% time reduction | awaiting validation | No improvement claim; measurement protocol documented | Operator-recorded paired timings; original offensive benchmark remains excluded |
 | O35 / 12 | Unit tests, mocks and real integration boundaries | implemented | Parser, advisory, health and scan interfaces; CI matrix | Live RPC evidence remains pending |
 | O36 / 12 | Dockerfile, Compose and installation guide | implemented | Docker/lab CI, `docs/installation.md` | Fresh installation and recovery checklist |
-| O37 / 13, final | Portfolio presentation and final validation evidence | remaining | README and current validation record | Final dashboard screenshots and acceptance record |
+| O37 / 13, final | Portfolio presentation and final validation evidence | awaiting validation | README, screenshots, release/recovery guide and automated validation record | Genuine RPC and paired-trial evidence still required |
 
 ## Approved additions and completion work
 
@@ -63,7 +63,7 @@ not delivered; **excluded** = outside the approved implementation scope.
 | A05 | Single-operator browser authentication and dashboard | implemented | Session/CSRF tests, real Chromium keyboard/review/export journeys and screenshots |
 | A06 | Optional reviewed reports and Unicode fonts | implemented | CLI/API exports, old-schema compatibility, Latin/Arabic and missing-glyph tests |
 | A07 | Offline diagnostics and reproducible release dependencies | implemented | Doctor side-effect checks, hash-locked installation, installed-wheel/offline container checks |
-| A08 | Paired-trial evaluation tooling | remaining | Cohort validation, unsuccessful-trial retention and arithmetic tests |
+| A08 | Paired-trial evaluation tooling | implemented | 29 tests: groups, failures, provenance, strict thresholds, artifacts and CLI compatibility |
 | A09 | Live RPC and real manual timing evidence | awaiting validation | Operator input; mocks cannot satisfy acceptance |
 
 ## Acceptance rules

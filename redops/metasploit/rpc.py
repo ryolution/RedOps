@@ -1,5 +1,6 @@
 """Minimal verified-TLS MessagePack health adapter; no execution interface."""
 
+import logging
 import os
 import ssl
 from urllib.parse import urlsplit
@@ -8,6 +9,8 @@ from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_ope
 import msgpack
 
 from redops.core.errors import RedOpsError
+
+logger = logging.getLogger(__name__)
 
 
 class NoRedirects(HTTPRedirectHandler):
@@ -27,7 +30,7 @@ class MetasploitClient:
             or parsed.fragment
         ):
             raise RedOpsError("RPC requires an HTTPS URL without credentials, query, or fragment.")
-        if not username or not password:
+        if not username or not password or len(username) > 200 or len(password) > 4096:
             raise RedOpsError(
                 "Set REDOPS_MSF_USERNAME and REDOPS_MSF_PASSWORD for the health check."
             )
@@ -63,6 +66,7 @@ class MetasploitClient:
             result = msgpack.unpackb(body, raw=False, strict_map_key=True)
             if not isinstance(result, dict) or result.get("error"):
                 raise ValueError
+            logger.info("RPC health method completed: %s", method)
             return result
         except (OSError, ValueError, msgpack.exceptions.UnpackException) as exc:
             raise RedOpsError(
@@ -72,18 +76,48 @@ class MetasploitClient:
     def health(self) -> dict[str, str]:
         login = self._request("auth.login", [self._username, self._password])
         token = login.get("token")
-        if login.get("result") != "success" or not isinstance(token, str) or not token:
+        if (
+            login.get("result") != "success"
+            or not isinstance(token, str)
+            or not token
+            or len(token) > 4096
+        ):
             raise RedOpsError("RPC authentication failed.")
+        primary_error = None
+        metadata = {}
         try:
             version = self._request("core.version", [token])
-            if not isinstance(version.get("version"), str):
+            value = version.get("version")
+            if (
+                not isinstance(value, str)
+                or not value
+                or len(value) > 256
+                or not value.isprintable()
+            ):
                 raise RedOpsError("RPC returned an invalid version response.")
-            return {
-                key: value
-                for key, value in version.items()
-                if key in {"version", "ruby", "api"} and isinstance(value, str)
-            }
+            for key in ("version", "ruby", "api"):
+                value = version.get(key)
+                if isinstance(value, str) and len(value) <= 256 and value.isprintable():
+                    for secret in sorted(
+                        (self._username, self._password, token), key=len, reverse=True
+                    ):
+                        value = value.replace(secret, "[redacted]")
+                    metadata[key] = value
+        except RedOpsError as exc:
+            primary_error = exc
         finally:
-            logout = self._request("auth.logout", [token])
-            if logout.get("result") != "success":
-                raise RedOpsError("RPC health check could not close its authentication session.")
+            try:
+                logout = self._request("auth.logout", [token])
+                if logout.get("result") != "success":
+                    raise RedOpsError(
+                        "RPC health check could not close its authentication session."
+                    )
+            except RedOpsError:
+                if primary_error:
+                    raise RedOpsError(
+                        "RPC health failed and logout could not be confirmed."
+                    ) from primary_error
+                raise
+        if primary_error:
+            raise primary_error
+        return metadata

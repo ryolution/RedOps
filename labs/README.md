@@ -17,19 +17,16 @@ attribution, operator, host limit, and short engagement expiry.
 
 ## Measurement protocol
 
-1. Define identical inventory, evidence-review, and reporting tasks for both methods.
-2. Collect manual and RedOps wall-clock times on the same inputs and environment.
-3. Include human candidate review time in both measurements; record cache state.
-4. Repeat each target trial and retain raw timings and notes outside this template.
-5. Put one chosen aggregate per unique target into `benchmark-template.csv`.
-6. Run `redops benchmark --input your-measurements.csv`.
+Use [paired measurement instructions](../docs/benchmark.md) and
+`paired-trials-template.csv` for completion evidence. Record at least three paired
+full-task trials per healthy lab service and cache/environment/operator group.
+Include human review in both methods and preserve unsuccessful attempts.
 
-The formula is `(sum(manual) - sum(redops)) / sum(manual) * 100`; this is a
-ratio of total times, not an average of per-target percentages. Slower automated
-runs produce negative savings. The tool reports whether the unrounded reduction
-strictly exceeds 60%; it does not verify the measurements. An empty template
-intentionally fails validation. No time-reduction claim is made by this project.
+The legacy `benchmark-template.csv` and `redops benchmark --input FILE` remain
+available for aggregate arithmetic; they do not meet paired-trial acceptance.
+The formula uses total manual and RedOps times, and only an unrounded result
+strictly above 60% passes the observed threshold. No measurements are bundled.
 
-`processing_seconds` in an assessment measures local validation and correlation
-before persistence; it excludes database writes, reports, and human review. Do
-not use it as the end-to-end benchmark measurement.
+`processing_seconds` excludes persistence, reports and human review, so it must
+not be used as the complete task duration. The workflow measured here is inventory
+assessment, not the excluded exploitation-preparation workflow.

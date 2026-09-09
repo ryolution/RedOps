@@ -69,6 +69,8 @@ contacts external services or writes database/report files.
 - [Synthetic demonstration and benchmark protocol](labs/README.md)
 - [Running twelve-service inventory lab](labs/inventory/README.md)
 - [Release checks, diagnostics, and recovery](docs/release.md)
+- [Paired benchmark measurements](docs/benchmark.md)
+- [Live RPC evidence collection](docs/rpc-validation.md)
 - [Validation record](docs/validation.md)
 
 ## Development

@@ -30,10 +30,12 @@ from redops.intelligence.cve import validate_catalog
 from redops.intelligence.nvd import CachedAdvisoryProvider, NvdClient
 from redops.metasploit.health import HealthProvider, MockMetasploitClient
 from redops.metasploit.rpc import MetasploitClient
+from redops.metasploit.validation import record_health
 from redops.recon.nmap import scan_inventory
 from redops.reporting.benchmark import calculate_benchmark
 from redops.reporting.document import report_document
 from redops.reporting.render import export_report
+from redops.reporting.trials import OUTPUTS, benchmark_trials
 
 
 def parser() -> argparse.ArgumentParser:
@@ -132,6 +134,9 @@ def parser() -> argparse.ArgumentParser:
     status.add_argument(
         "--mock", action="store_true", help="Use an explicitly marked offline fixture"
     )
+    status.add_argument("--evidence", type=Path, help="New sanitized live-health evidence file")
+    status.add_argument("--environment", help="Environment ID for live evidence")
+    status.add_argument("--operator-pseudonym", help="Operator attribution for live evidence")
     intelligence = commands.add_parser("intelligence", help="CVE advisory lookup")
     intelligence_commands = intelligence.add_subparsers(dest="intelligence_command", required=True)
     lookup = intelligence_commands.add_parser("lookup")
@@ -150,7 +155,12 @@ def parser() -> argparse.ArgumentParser:
     benchmark = commands.add_parser(
         "benchmark", help="Calculate savings from supplied measurements"
     )
-    benchmark.add_argument("--input", type=Path, required=True)
+    measurements = benchmark.add_mutually_exclusive_group(required=True)
+    measurements.add_argument("--input", type=Path, help="Legacy aggregate CSV")
+    measurements.add_argument("--trials", type=Path, help="Paired full-task CSV")
+    benchmark.add_argument(
+        "--output-dir", type=Path, help="New paired benchmark artifact directory"
+    )
     assessments = commands.add_parser("assessments", help="List saved assessment summaries")
     assessments.add_argument("--engagement")
     assessments.add_argument("--limit", type=int, default=50)
@@ -170,9 +180,25 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     if args.command == "report":
         protected_paths.append(args.output)
     elif args.command == "benchmark":
-        protected_paths.append(args.input)
+        protected_paths.append(args.input or args.trials)
+        if args.output_dir:
+            if not args.trials:
+                raise RedOpsError("--output-dir requires --trials.")
+            protected_paths.extend(args.output_dir / name for name in OUTPUTS)
     elif args.command == "intelligence" and args.intelligence_command == "catalog":
         protected_paths.append(args.input)
+    elif args.command == "metasploit":
+        if args.evidence:
+            if args.mock or not args.environment or not args.operator_pseudonym:
+                raise RedOpsError(
+                    "Live evidence requires --environment and --operator-pseudonym; "
+                    "mocks cannot supply it."
+                )
+            protected_paths.append(args.evidence)
+        elif args.environment or args.operator_pseudonym:
+            raise RedOpsError("Evidence attribution requires --evidence.")
+        if os.environ.get("REDOPS_MSF_CA_FILE") and not args.mock:
+            protected_paths.append(Path(os.environ["REDOPS_MSF_CA_FILE"]))
     require_distinct_paths(protected_paths)
     if args.command == "review":
         if args.review_command == "list":
@@ -253,7 +279,13 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
     audit.record(args.command, "started", operator=operator)
     try:
         if args.command == "benchmark":
-            result = calculate_benchmark(args.input)
+            result = (
+                benchmark_trials(
+                    args.trials, args.output_dir, protected_paths=settings.storage_paths()
+                )
+                if args.trials
+                else calculate_benchmark(args.input)
+            )
         elif args.command == "serve":
             import uvicorn
 
@@ -283,10 +315,15 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
             )
             result = advisory_source.lookup(args.cve).to_dict()
         elif args.command == "metasploit":
-            health_source: HealthProvider = (
-                MockMetasploitClient() if args.mock else MetasploitClient.from_env()
-            )
-            result = health_source.health()
+            if args.evidence:
+                result = record_health(
+                    args.evidence, environment=args.environment, operator=args.operator_pseudonym
+                )
+            else:
+                health_source: HealthProvider = (
+                    MockMetasploitClient() if args.mock else MetasploitClient.from_env()
+                )
+                result = health_source.health()
         else:
             repository = Repository(settings.database_url, create=args.command == "init")
             try:

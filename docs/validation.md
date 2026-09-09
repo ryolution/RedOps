@@ -7,7 +7,7 @@ software supports JSON inventory provenance, evidence-catalog validation, append
 reviews with schema migration, browser sessions/CSRF, reviewed exports and bundled
 Unicode fonts. Original offensive exclusions remain unmet.
 
-Local checks on Linux Python 3.14 include 215 passing regression tests with warnings treated
+Local checks on Linux Python 3.14 include 256 passing regression tests with warnings treated
 as errors, three real Chromium journeys (desktop and 390px), hash-locked dependency
 installation, wheel/source asset validation, and execution of the installed wheel
 away from the checkout. The wheel check completes an offline assessment, all report
@@ -18,10 +18,26 @@ linked from [release operation](release.md).
 
 Batches 1–5 each passed the existing six-job GitHub Actions workflow after pushing.
 The delivery batch adds a dedicated Chromium job, consumes hash locks in every
-Python job, and checks installed-wheel execution on Python 3.11/3.13/3.14. Its final
-CI result must be read from the commit's Actions checks; local results do not stand
-in for remote checks. Real Metasploit RPC evidence and genuine human benchmark
+Python job, and checks installed-wheel execution on Python 3.11/3.13/3.14. All seven delivery jobs passed for commit `3071269`; see
+[the completed Actions run](https://github.com/ryolution/RedOps/actions/runs/34343160408). Real Metasploit RPC evidence and genuine human benchmark
 measurements remain pending.
+
+## Paired evaluation and RPC evidence tooling
+
+The paired evaluator preserves raw input hashes, full records and unsuccessful
+attempts, separates cache/environment/operator groups and uses a strict Decimal
+threshold. Its 29 tests include incomplete samples, changed inputs, failure
+retention, precise threshold boundaries, artifact rollback and legacy CLI behavior.
+
+The health adapter has controlled HTTPS tests with a generated temporary certificate.
+Authentication, certificate trust, version retrieval, logout, malformed responses,
+unavailable service, timeout and cleanup failures are exercised. These fixtures
+are not real Metasploit evidence. The evidence command rejects mock mode and saves
+sanitized success or failure records without credentials/session tokens/endpoint URLs.
+
+No `REDOPS_MSF_*` live configuration or genuine paired timings were available for
+this implementation. External acceptance remains pending; neither the local tests
+nor the screenshots establish real RPC deployment or measured performance.
 
 ## Historical baseline: September 8, 2026
 

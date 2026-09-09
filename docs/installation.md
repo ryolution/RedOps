@@ -138,6 +138,10 @@ redops metasploit status
 redops metasploit status --mock
 ```
 
+For sanitized live records, use the [RPC validation procedure](rpc-validation.md).
+Paired task measurements and their separate external acceptance gate are described
+in [benchmark evaluation](benchmark.md).
+
 The adapter uses the [Rapid7 MessagePack RPC contract](https://docs.rapid7.com/metasploit/rpc-api/)
 to log in, request `core.version`, and log out. Only version, Ruby, and API metadata
 are returned. Requests time out after 10 seconds, responses are bounded, and

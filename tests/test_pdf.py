@@ -26,8 +26,7 @@ def test_pdf_preserves_supported_unicode_and_escapes_missing_glyphs(preview, cap
         page.extract_text() for page in PdfReader(io.BytesIO(render_pdf(preview))).pages
     )
     assert "démo-λ café \\u6f22" in content
-    # PDF extraction may reorder Arabic runs; every original letter remains mapped.
-    assert set("مرحبا بالعالم") <= set(content)
+    assert "مرحبا بالعالم" in content
     assert "missing" not in caplog.text.lower()
 
 
