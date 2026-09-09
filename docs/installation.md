@@ -61,7 +61,9 @@ specify `--assessment UUID` when working with multiple engagements.
 | `REDOPS_MSF_CA_FILE` | Optional trusted CA bundle for the health service |
 | `REDOPS_NVD_API_KEY` | Optional NVD API key, sent only in the HTTPS request header |
 | `REDOPS_NVD_CACHE` | `data/nvd-cache`; validated advisory cache |
-| `REDOPS_API_TOKEN` | Required shared token for the optional read-only API |
+| `REDOPS_API_TOKEN` | Required shared token for the dashboard and API |
+| `REDOPS_OPERATOR` | Server-side review attribution; defaults to the OS account |
+| `REDOPS_UI_ALLOW_HTTP` | Default `0`; explicit loopback Docker development only |
 
 Global `--database`, `--audit`, and `--verbose` flags precede the subcommand. Environment
 configuration is preferred for database URLs containing credentials. Protect the

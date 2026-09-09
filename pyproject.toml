@@ -16,6 +16,7 @@ dependencies = [
     "fpdf2>=2.8.3,<3",
     "fastapi>=0.115,<1",
     "uvicorn>=0.34,<1",
+    "Jinja2>=3.1.6,<4",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +28,9 @@ redops = "redops.cli.main:main"
 
 [tool.setuptools.packages.find]
 include = ["redops*"]
+
+[tool.setuptools.package-data]
+redops = ["web/templates/*.html", "web/static/*.css", "web/static/*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

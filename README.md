@@ -5,7 +5,8 @@ Offensive Automation Toolkit
 RedOps provides scoped inventory and vulnerability evidence assessment. It imports
 Nmap XML, correlates exact CPEs against reviewed evidence, retrieves NVD advisory
 context, preserves assessment history, and produces JSON, HTML, and PDF reports.
-An authenticated API serves existing assessments.
+An authenticated browser dashboard and API serve existing assessments and
+append operator review decisions.
 
 ## Run the offline demonstration
 
@@ -40,7 +41,7 @@ scope declaration, previously collected Nmap XML, and reviewed evidence catalog.
 | Database | SQLite/PostgreSQL history, portable backup/restore, migration, retention |
 | Metasploit | Verified-TLS RPC health check and explicit offline mock |
 | Reporting | JSON, HTML, paginated PDF, measured benchmark calculations |
-| API | Bearer authentication, assessment listing, inventory, report downloads |
+| Dashboard / API | Browser sessions, filters, review history, report downloads, bearer API |
 | Delivery | Regression tests, CI matrix, PostgreSQL and container integration jobs |
 
 ```bash
@@ -60,6 +61,8 @@ contacts external services or writes database/report files.
 - [Installation, CLI, configuration, and deployment](docs/installation.md)
 - [Inventory evidence formats](docs/inventory.md)
 - [Requirement and acceptance record](docs/completion.md)
+- [Browser dashboard](docs/dashboard.md)
+- [Finding reviews](docs/reviews.md)
 - [Authenticated API](docs/api.md)
 - [Database backup, restore, migration, and retention](docs/database.md)
 - [Synthetic demonstration and benchmark protocol](labs/README.md)

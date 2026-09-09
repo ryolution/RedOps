@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% from 'macros.html' import pages %}
+{% block title %}{{ finding.vulnerability_id }} · RedOps{% endblock %}
+{% block content %}
+<a class="back" href="/ui/assessments/{{ document.id }}">← {{ document.scope.engagement }}</a>
+<div class="page-heading"><div><p class="eyebrow">Candidate evidence</p><h1>{{ finding.vulnerability_id }}</h1><p class="lead mono">{{ finding.host }}:{{ finding.port }}/{{ finding.protocol }}</p></div>
+<span class="badge {{ finding.severity }}">{{ finding.severity|title }} · CVSS {{ finding.cvss if finding.cvss is not none else 'unknown' }}</span></div>
+<div class="two-column"><section class="panel"><h2>Observed evidence</h2><p>{{ finding.description }}</p>
+<h3>Exact matched CPEs</h3><ul class="mono small">{% for cpe in finding.matched_cpes %}<li>{{ cpe }}</li>{% endfor %}</ul>
+<h3>Catalog source</h3>{% if source_url %}<a class="break" href="{{ source_url }}" target="_blank" rel="noopener noreferrer">{{ finding.source }}</a>{% else %}<p class="break">{{ finding.source }}</p>{% endif %}
+<h3>Remediation guidance</h3><p>{{ finding.remediation }}</p><p class="notice">A catalog match is a candidate requiring review. Operator decisions are recorded separately from this original evidence.</p>
+<button class="quiet" type="button" data-copy="{{ finding.key }}">Copy finding key</button></section>
+<section class="panel"><p class="eyebrow">Operator assessment</p><h2>Record a decision</h2>
+{% if history.writable %}<form class="stack" method="post" action="/ui/assessments/{{ document.id }}/findings/{{ finding.key }}/reviews">
+<input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="expected_previous" value="{{ history.latest_id }}">
+<label for="disposition">Disposition</label><select id="disposition" name="disposition">{% for value, label in labels.items() %}<option value="{{ value }}" {% if finding.review and finding.review.disposition==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+<label for="notes">Evidence and reasoning</label><textarea id="notes" name="notes" rows="6" maxlength="10000" aria-describedby="notes-help"></textarea>
+<p id="notes-help" class="muted small">Explain the evidence supporting your decision. Previous reviews remain in the history.</p><button type="submit">Save review</button></form>
+{% else %}<p class="notice">Review storage needs an explicit database migration. Existing assessment evidence remains readable.</p>{% endif %}</section></div>
+<section class="panel"><div class="section-heading"><h2>Review history</h2><span class="muted">Latest revision {{ history.latest_id }}</span></div>
+{% for event in events %}<article class="review-event"><div class="section-heading"><strong>{{ labels[event.disposition] }}</strong><span class="muted small">Revision {{ event.id }}</span></div>
+<p class="review-notes">{{ event.notes or 'No additional notes' }}</p><p class="muted small">{{ event.operator }} · <time>{{ event.timestamp }}</time></p></article>
+{% else %}<p class="empty">No operator decisions have been recorded for this finding.</p>{% endfor %}
+{{ pages(pagination, 'Review history pages') }}</section>
+{% endblock %}

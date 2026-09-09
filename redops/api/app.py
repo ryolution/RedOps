@@ -29,7 +29,9 @@ class ReviewInput(BaseModel):
     expected_previous: int = Field(ge=0)
 
 
-def create_app(settings: Settings | None = None, *, token: str | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, *, token: str | None = None, allow_http_ui: bool = False
+) -> FastAPI:
     settings = settings or Settings.from_env()
     token = token if token is not None else os.environ.get("REDOPS_API_TOKEN", "")
     if len(token) < 32 or len(token) > 4096:
@@ -39,6 +41,9 @@ def create_app(settings: Settings | None = None, *, token: str | None = None) ->
     operator = os.environ.get("REDOPS_OPERATOR", getpass.getuser()).strip()
     if not operator or len(operator) > 200 or "\x00" in operator:
         raise RedOpsError("REDOPS_OPERATOR must be a nonempty name of at most 200 characters.")
+    http_setting = os.environ.get("REDOPS_UI_ALLOW_HTTP", "0")
+    if http_setting not in {"0", "1"}:
+        raise RedOpsError("REDOPS_UI_ALLOW_HTTP must be 0 or 1.")
     bearer = HTTPBearer(auto_error=False)
     app = FastAPI(title="RedOps", version="", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -47,7 +52,12 @@ def create_app(settings: Settings | None = None, *, token: str | None = None) ->
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; "
+            "form-action 'self'; base-uri 'none'; frame-ancestors 'none'; connect-src 'self'"
+            if request.url.path.startswith("/ui")
+            else "default-src 'none'; frame-ancestors 'none'"
+        )
         return response
 
     def authenticate(
@@ -107,7 +117,9 @@ def create_app(settings: Settings | None = None, *, token: str | None = None) ->
             raise HTTPException(404, "Assessment or finding not found.") from exc
         except InputError as exc:
             raise HTTPException(422, str(exc)) from exc
-        except (SQLAlchemyError, RedOpsError, OSError) as exc:
+        except RedOpsError as exc:
+            raise HTTPException(503, str(exc)) from exc
+        except (SQLAlchemyError, OSError) as exc:
             raise HTTPException(
                 503, "Review or audit storage is unavailable; check schema migration."
             ) from exc
@@ -183,4 +195,9 @@ def create_app(settings: Settings | None = None, *, token: str | None = None) ->
             },
         )
 
+    from redops.web.routes import install_dashboard
+
+    install_dashboard(
+        app, settings, token, operator, allow_http=allow_http_ui or http_setting == "1"
+    )
     return app

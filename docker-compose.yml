@@ -29,6 +29,7 @@ services:
     tmpfs: [/tmp]
     environment:
       REDOPS_API_TOKEN: ${REDOPS_API_TOKEN:-}
+      REDOPS_UI_ALLOW_HTTP: '1'
     ports: ['127.0.0.1:8000:8000']
     networks: [api-local]
     volumes:

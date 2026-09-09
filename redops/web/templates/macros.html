@@ -1,0 +1,7 @@
+{% macro pages(pagination, label='Pages') %}
+<nav class="pagination" aria-label="{{ label }}">
+  {% if pagination.previous %}<a class="button secondary" href="{{ pagination.previous }}">Previous</a>{% endif %}
+  <span>Page {{ pagination.number }}</span>
+  {% if pagination.next %}<a class="button secondary" href="{{ pagination.next }}">Next</a>{% endif %}
+</nav>
+{% endmacro %}

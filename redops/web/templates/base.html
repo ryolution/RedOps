@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}RedOps{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('ui_static', path='app.css') }}">
+  <script defer src="{{ url_for('ui_static', path='app.js') }}"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar"><a class="brand" href="/ui"><span class="brandmark" aria-hidden="true">R</span>RedOps</a>
+  <span class="topnote">Assessment workspace</span>
+  {% if session and session.authenticated %}<form action="/ui/logout" method="post" class="logout">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <span class="operator">{{ operator }}</span><button class="quiet" type="submit">Sign out</button>
+  </form>{% endif %}
+</header>
+<div class="layout">
+{% if session and session.authenticated %}<aside class="sidebar"><p class="eyebrow">Workspace</p>
+  <a class="navitem" href="/ui">Assessments <span aria-hidden="true">↗</span></a>
+  <div class="sidebar-note"><span class="dot" aria-hidden="true"></span>Operator review enabled<p>Evidence stays attached to its original assessment.</p></div>
+</aside>{% endif %}
+<main id="main" class="main">{% block content %}{% endblock %}</main>
+</div>
+<div id="copy-status" role="status" class="toast" hidden></div>
+</body></html>

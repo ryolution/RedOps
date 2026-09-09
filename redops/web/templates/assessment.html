@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% from 'macros.html' import pages %}
+{% block title %}{{ document.scope.engagement }} · RedOps{% endblock %}
+{% block content %}
+<a class="back" href="/ui">← Assessments</a>
+<div class="page-heading"><div><p class="eyebrow">Assessment evidence</p><h1>{{ document.scope.engagement }}</h1>
+<p class="muted mono small">{{ document.id }}</p></div>
+<div class="downloads" aria-label="Report downloads">{% for format in ['json','html','pdf'] %}<a class="button secondary" href="/ui/assessments/{{ document.id }}/report?format={{ format }}">{{ format|upper }}</a>{% endfor %}</div></div>
+<div class="metrics"><section class="metric"><span>Hosts recorded</span><strong>{{ document.hosts|length }}</strong></section>
+<section class="metric"><span>Services recorded</span><strong>{{ document.coverage.services_total }}</strong></section>
+<section class="metric"><span>Candidate findings</span><strong>{{ document.findings|length }}</strong></section>
+<section class="metric"><span>Supported CPE coverage</span><strong>{{ document.coverage.services_with_supported_cpe }}<small> / {{ document.coverage.services_total }}</small></strong></section></div>
+<details class="panel evidence"><summary>Scope, provenance, and interpretation</summary>
+<dl><dt>Operator</dt><dd>{{ document.scope.operator }}</dd><dt>Authorization attribution</dt><dd>{{ document.scope.authorized_by }}</dd>
+<dt>Recorded</dt><dd>{{ document.created_at }}</dd><dt>Allowed addresses</dt><dd>{{ document.scope.allowlist|join(', ') }}</dd></dl>
+<h3>Input provenance</h3><dl>{% for key, value in document.provenance.items() %}<dt>{{ key|replace('_',' ') }}</dt><dd class="mono small">{{ value }}</dd>{% endfor %}</dl>
+<ul>{% for warning in document.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></details>
+<form class="panel filters" method="get"><div class="field grow"><label for="q">Search inventory and findings</label><input id="q" name="q" maxlength="200" value="{{ search }}" placeholder="Host, product, port, or finding"></div>
+<div class="field"><label for="severity">Severity</label><select id="severity" name="severity"><option value="">All severities</option>{% for value in ['critical','high','medium','low','none','unknown'] %}<option value="{{ value }}" {% if severity==value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select></div>
+<div class="field"><label for="disposition">Review</label><select id="disposition" name="disposition"><option value="">All decisions</option>{% for value, label in labels.items() %}<option value="{{ value }}" {% if disposition==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><button type="submit">Apply filters</button>
+<a class="button secondary" href="/ui/assessments/{{ document.id }}">Reset</a></form>
+<section class="panel"><div class="section-heading"><h2>Inventory</h2><span class="muted">{{ inventory_total }} matching observations</span></div>
+{% if inventory %}<div class="table-wrap"><table><caption class="visually-hidden">Recorded services</caption><thead><tr><th>Host</th><th>Port</th><th>Service / product</th><th>Version</th><th>OS observation</th></tr></thead><tbody>
+{% for row in inventory %}<tr><td><span class="mono">{{ row.host.ip }}</span><small class="block muted">{{ row.host.hostname }}</small></td>
+<td class="mono">{% if row.service %}{{ row.service.port.number }}/{{ row.service.port.protocol }}{% else %}—{% endif %}</td>
+<td>{% if row.service %}{{ row.service.name }}<small class="block muted">{{ row.service.product or 'Product unknown' }}</small>{% else %}No recorded open services{% endif %}</td>
+<td>{{ row.service.version or 'Unknown' if row.service else '—' }}</td><td>{{ row.host.os or 'Unknown' }}</td></tr>{% endfor %}</tbody></table></div>
+{{ pages(inventory_pager, 'Inventory pages') }}{% else %}<p class="empty">No inventory observations match this search.</p>{% endif %}</section>
+<section class="panel"><div class="section-heading"><h2>Candidate findings</h2><span class="muted">{{ findings_total }} matching findings</span></div>
+{% if findings %}<div class="table-wrap"><table><caption class="visually-hidden">Candidate findings and operator review</caption><thead><tr><th>Finding</th><th>Observation</th><th>Severity</th><th>Operator decision</th></tr></thead><tbody>
+{% for finding in findings %}<tr><td><a class="strong" href="/ui/assessments/{{ document.id }}/findings/{{ finding.key }}">{{ finding.vulnerability_id }}</a></td><td class="mono">{{ finding.host }}:{{ finding.port }}/{{ finding.protocol }}</td>
+<td><span class="badge {{ finding.severity }}">{{ finding.severity|title }}</span></td><td>{{ labels[finding.review.disposition] if finding.review else 'Needs review' }}</td></tr>{% endfor %}</tbody></table></div>
+{{ pages(findings_pager, 'Finding pages') }}{% else %}<div class="empty"><p>No candidates match these filters. Absence of a match does not establish that a service is secure.</p></div>{% endif %}</section>
+{% endblock %}

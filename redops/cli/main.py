@@ -254,7 +254,13 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> object:
 
             if not 1 <= args.port <= 65535:
                 raise RedOpsError("API port must be between 1 and 65535.")
-            uvicorn.run(create_app(settings), host=args.host, port=args.port, access_log=False)
+            uvicorn.run(
+                create_app(settings, allow_http_ui=args.host in {"127.0.0.1", "localhost", "::1"}),
+                host=args.host,
+                port=args.port,
+                access_log=False,
+                workers=1,
+            )
             result = {"status": "stopped"}
         elif args.command == "intelligence" and args.intelligence_command == "catalog":
             result = validate_catalog(read_bounded(args.input))

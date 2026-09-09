@@ -2,6 +2,7 @@
 
 The API reads assessments created by the CLI and appends operator review
 annotations. Collection and database maintenance remain CLI operations.
+The browser interface is available at `/ui`; see [dashboard operation](dashboard.md).
 See [finding reviews](reviews.md) for the authenticated annotation routes.
 
 ```bash
