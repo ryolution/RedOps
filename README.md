@@ -1,14 +1,24 @@
-# RedOps
-Offensive Automation Toolkit
-
-
+<div align="center">
 <img src="redops/web/static/redops-mark.png" alt="RedOps logo" width="80" height="80">
 
+<h1>RedOps</h1>
+
+<p><strong>Offensive Automation Toolkit</strong></p>
+
+<p>
 RedOps provides scoped inventory and vulnerability evidence assessment. It imports
-Nmap XML or normalized JSON inventory, correlates exact CPEs against reviewed evidence, retrieves NVD advisory
-context, preserves assessment history, and produces JSON, HTML, and PDF reports.
+Nmap XML or normalized JSON inventory, correlates exact CPEs against reviewed evidence,
+retrieves NVD advisory context, preserves assessment history, and produces JSON, HTML,
+and PDF reports.
+</p>
+
+<p>
 An authenticated browser dashboard and API serve existing assessments and
 append operator review decisions.
+</p>
+
+</div>
+
 
 ## Run the offline demonstration
 
