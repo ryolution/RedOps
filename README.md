@@ -1,5 +1,5 @@
 <div align="center">
-<img src="redops/web/static/redops-mark.png" alt="RedOps logo" width="80" height="80">
+<img src="redops/web/static/redops-mark.png" alt="RedOps logo" width="120" height="120">
 
 <h1>RedOps</h1>
 
@@ -10,11 +10,11 @@ RedOps provides scoped inventory and vulnerability evidence assessment. It impor
 Nmap XML or normalized JSON inventory, correlates exact CPEs against reviewed evidence,
 retrieves NVD advisory context, preserves assessment history, and produces JSON, HTML,
 and PDF reports.
-</p>
-
-<p>
 An authenticated browser dashboard and API serve existing assessments and
 append operator review decisions.
+</p>
+<p>
+
 </p>
 
 </div>
