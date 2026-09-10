@@ -151,6 +151,8 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     page.locator("a.back").click()
     page.get_by_label("Review", exact=True).select_option("not_affected")
     page.get_by_role("button", name="Filter", exact=True).click()
+    # Escape handling is installed by the deferred script on this new document.
+    page.wait_for_load_state("load")
     expect(page.get_by_role("link", name="DEMO-WEB-001", exact=True)).to_have_count(1)
     expect(page.locator(".review-ring strong")).to_have_text("1")
     expect(page.locator('.severity-chart meter[aria-label="High candidates"]')).to_have_attribute(
