@@ -2,9 +2,9 @@
 {% block title %}{{ document.scope.engagement }} · RedOps{% endblock %}
 {% block content %}
 <a class="back" href="/ui">{{ icon('arrow') }} Assessments</a>
-<div class="page-heading">
+<div class="page-heading" id="overview" tabindex="-1">
   <h1>{{ document.scope.engagement }}</h1>
-  <details class="export-menu">
+  <details class="export-menu" id="reports">
     <summary class="button">{{ icon('download') }} Export</summary>
     <div class="export-options">
       <h2>Original</h2>
@@ -24,6 +24,28 @@
   <section class="metric metric-accent"><span>Candidates</span><strong>{{ document.findings|length }}</strong></section>
   <section class="metric"><span>CPE coverage</span><strong>{{ document.coverage.services_with_supported_cpe }}<small> / {{ document.coverage.services_total }}</small></strong></section>
 </div>
+<div class="analytics">
+  <section class="panel severity-chart" aria-labelledby="severity-title">
+    <div class="section-heading"><h2 id="severity-title">Severity</h2><span class="muted small">All candidates</span></div>
+    <div class="severity-bars">
+    {% for level in ['critical', 'high', 'medium', 'low', 'none', 'unknown'] %}
+      {% set total = snapshot.findings|selectattr('severity', 'equalto', level)|list|length %}
+      <div class="severity-row"><span>{{ level|title }}</span><meter class="{{ level }}" min="0" max="{{ [snapshot.findings|length, 1]|max }}" value="{{ total }}" aria-label="{{ level|title }} candidates">{{ total }}</meter><strong>{{ total }}</strong></div>
+    {% endfor %}
+    </div>
+  </section>
+  {% set review_totals = namespace(pending=0) %}
+  {% for item in snapshot.findings %}{% if not item.review or item.review.disposition == 'needs_review' %}{% set review_totals.pending = review_totals.pending + 1 %}{% endif %}{% endfor %}
+  {% set decided = snapshot.findings|length - review_totals.pending %}
+  {% set percent = decided * 100 / (snapshot.findings|length) if snapshot.findings else 0 %}
+  <section class="panel review-chart" aria-labelledby="review-title">
+    <div class="section-heading"><h2 id="review-title">Review status</h2><span class="muted small">All candidates</span></div>
+    <div class="review-chart-content">
+      <div class="review-ring"><svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle class="ring-track" cx="60" cy="60" r="50"/><circle class="ring-value" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="{{ percent }} 100" transform="rotate(-90 60 60)"/></svg><div><strong>{{ decided }}</strong><span>Decisions</span></div></div>
+      <dl class="review-legend"><dt>Needs review</dt><dd>{{ review_totals.pending }}</dd><dt>Decided</dt><dd>{{ decided }}</dd><dt>Total candidates</dt><dd>{{ snapshot.findings|length }}</dd></dl>
+    </div>
+  </section>
+</div>
 <details class="panel evidence"><summary>Assessment details</summary>
   <dl><dt>Assessment</dt><dd class="mono small">{{ document.id }}</dd><dt>Operator</dt><dd>{{ document.scope.operator }}</dd><dt>Authorized by</dt><dd>{{ document.scope.authorized_by }}</dd>
   <dt>Recorded</dt><dd>{{ document.created_at }}</dd><dt>Scope</dt><dd>{{ document.scope.allowlist|join(', ') }}</dd></dl>
@@ -36,14 +58,14 @@
   <div class="field"><label for="disposition">Review</label><select id="disposition" name="disposition"><option value="">All decisions</option>{% for value, label in labels.items() %}<option value="{{ value }}" {% if disposition==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
   <button type="submit">{{ icon('filter') }} Filter</button><a class="button secondary" href="/ui/assessments/{{ document.id }}">Reset</a>
 </form>
-<section class="panel"><div class="section-heading"><h2>Inventory</h2><span class="count" aria-label="{{ inventory_total }} observations">{{ inventory_total }}</span></div>
+<section class="panel" id="inventory" tabindex="-1"><div class="section-heading"><h2>Inventory</h2><span class="count" aria-label="{{ inventory_total }} observations">{{ inventory_total }}</span></div>
 {% if inventory %}<div class="table-wrap" tabindex="0" role="region" aria-label="Inventory table"><table><caption class="visually-hidden">Recorded services</caption><thead><tr><th>Host</th><th>Port</th><th>Service / product</th><th>Version</th><th>OS</th></tr></thead><tbody>
 {% for row in inventory %}<tr><td><span class="mono">{{ row.host.ip }}</span><small class="block muted">{{ row.host.hostname }}</small></td>
 <td class="mono">{% if row.service %}{{ row.service.port.number }}/{{ row.service.port.protocol }}{% else %}—{% endif %}</td>
 <td>{% if row.service %}{{ row.service.name }}<small class="block muted">{{ row.service.product or 'Unknown product' }}</small>{% else %}No open services{% endif %}</td>
 <td>{{ row.service.version or 'Unknown' if row.service else '—' }}</td><td>{{ row.host.os or 'Unknown' }}</td></tr>{% endfor %}</tbody></table></div>
 {{ pages(inventory_pager, 'Inventory pages') }}{% else %}<p class="empty">No matching inventory.</p>{% endif %}</section>
-<section class="panel"><div class="section-heading"><h2>Candidate findings</h2><span class="count" aria-label="{{ findings_total }} candidates">{{ findings_total }}</span></div>
+<section class="panel" id="findings" tabindex="-1"><div class="section-heading"><h2>Candidate findings</h2><span class="count" aria-label="{{ findings_total }} candidates">{{ findings_total }}</span></div>
 {% if findings %}<div class="table-wrap" tabindex="0" role="region" aria-label="Findings table"><table><caption class="visually-hidden">Candidate findings and operator review</caption><thead><tr><th>Finding</th><th>Observation</th><th>Severity</th><th>Review</th></tr></thead><tbody>
 {% for finding in findings %}<tr><td><a class="strong" href="/ui/assessments/{{ document.id }}/findings/{{ finding.key }}">{{ finding.vulnerability_id }}</a></td><td class="mono">{{ finding.host }}:{{ finding.port }}/{{ finding.protocol }}</td>
 <td><span class="badge {{ finding.severity }}">{{ finding.severity|title }}</span></td><td>{{ labels[finding.review.disposition] if finding.review else 'Needs review' }}</td></tr>{% endfor %}</tbody></table></div>

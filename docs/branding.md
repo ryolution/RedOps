@@ -13,14 +13,14 @@ The master asset is [redops-mark.png](../redops/web/static/redops-mark.png), a
 The color direction is crimson (`#E4475C`); the generated image contains slight
 color variation. Preserve its square proportions and transparency.
 
-- The dashboard header and centered login screen use the mark alone. The browser
+- The dashboard sidebar and centered login screen use the mark alone. The browser
   icon and touch icon use the same local asset.
 - HTML assessment and paired benchmark reports embed the PNG as a data URI.
   PDF assessments embed it in the page header. Exports remain self-contained.
 - The README uses the repository asset. The wheel and source distribution
   include it, and `redops doctor` checks that it is present.
 
-The header link has the accessible name `RedOps home`; its image has empty
+The navigation logo link has the accessible name `RedOps home`; its image has empty
 alternative text. The standalone login mark uses `alt="RedOps"`. These accessible
 names do not add a visible wordmark.
 See the [desktop dashboard](images/dashboard-desktop.png) and
@@ -30,19 +30,25 @@ for examples. Screenshots contain synthetic fixtures or an empty sign-in form.
 
 ## Interface direction
 
-The application uses dark translucent panels, thin highlights, crimson accents,
-and a quiet gradient background. The login card is centered horizontally and
-vertically, including its logo, heading, field, and button. The assessment pages
-use short titles; provenance and interpretation live in expandable details.
+The application uses solid charcoal surfaces, fine dividers, restrained crimson
+accents, and a persistent sidebar. It has no background lighting, gradients, or
+blur. The login card remains centered horizontally and vertically, including its
+logo, heading, field, and button. Assessment pages use short titles; provenance
+and interpretation live in expandable details. Severity and review charts show
+actual assessment totals.
 
-Visual references: [Rehab Attia's Glass Morphism dashboard on Behance](https://www.behance.net/gallery/162954891/Dashboard-Interface-Glass-Morphism)
-and [Orchids Creative's glass login reference on Pinterest](https://in.pinterest.com/pin/590604938669673611/).
-These informed the translucent surfaces and centered composition. RedOps uses its
-own CSS and assets; reference artwork is not bundled or loaded by the application.
+The main references are the Smartnet cybersecurity dashboard series by Firoz
+Hossain and collaborators on Behance:
 
-The layout uses system fonts and local assets. Solid surfaces replace blur when
-unsupported or when reduced transparency is requested; reduced motion and forced
-colors are also supported.
+- [Dashboard overview](https://www.behance.net/gallery/185119011/Smartnet-CyberSecurity-Dashboard-Design):
+  approximately **1.2K appreciations** when checked on September 9, 2026.
+- [Data security view](https://www.behance.net/gallery/185607413/Smartnet-CyberSecurity-Dashboard-Design):
+  approximately **1.1K appreciations** on the same date.
+
+These informed the sidebar hierarchy, compact metrics, and structured data
+panels. RedOps uses its own CSS, icons, and assessment data. Reference artwork is
+not bundled or loaded by the application. System fonts and local assets keep
+the interface offline; reduced motion and forced colors are supported.
 
 ## Generation record
 

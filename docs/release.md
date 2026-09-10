@@ -94,6 +94,8 @@ Browser tests run against a disposable loopback server and synthetic assessments
 They cover centered login, keyboard navigation/review, desktop and 390-pixel
 layouts, local assets, filters, pagination, escaped imports, session expiry and
 all downloads through the export menu, including Escape and focus restoration.
+They also exercise the responsive sidebar and verify that assessment summary
+counts remain consistent after a review and when filtering the findings table.
 The [desktop assessment](images/dashboard-desktop.png),
 [narrow assessment](images/dashboard-mobile.png),
 [desktop review](images/review-desktop.png) and

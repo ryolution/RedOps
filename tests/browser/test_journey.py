@@ -47,12 +47,12 @@ def server(settings, labs, monkeypatch):
         assert not thread.is_alive(), "Local test server failed to stop"
 
 
-def screenshot(page, name):
+def screenshot(page, name, *, full_page=True):
     directory = os.environ.get("REDOPS_SCREENSHOT_DIR")
     if directory:
         path = Path(directory)
         path.mkdir(parents=True, exist_ok=True)
-        page.screenshot(path=str(path / (name + ".png")), full_page=True)
+        page.screenshot(path=str(path / (name + ".png")), full_page=full_page)
 
 
 def sign_in(page, origin, capture=None):
@@ -99,7 +99,27 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     page.keyboard.press("Enter")
     expect(page.get_by_role("heading", name="Inventory", exact=True)).to_be_visible()
     page.wait_for_load_state("load")
-    screenshot(page, "dashboard-" + name)
+    expect(page.locator('.severity-chart meter[aria-label="High candidates"]')).to_have_attribute(
+        "value", "4"
+    )
+    expect(page.locator(".review-ring strong")).to_have_text("0")
+    navigation = page.get_by_role("navigation", name="Main navigation")
+    if width < 851:
+        page.get_by_role("button", name="Open navigation").click()
+        expect(navigation).to_be_visible()
+        screenshot(page, "sidebar-" + name, full_page=False)
+        page.keyboard.press("Escape")
+        expect(navigation).not_to_be_visible()
+        expect(page.get_by_role("button", name="Open navigation")).to_be_focused()
+        page.keyboard.press("Enter")
+    navigation.get_by_role("link", name="Inventory", exact=True).click()
+    expect(page).to_have_url(origin + f"/ui/assessments/{document['id']}#inventory")
+    if width < 851:
+        expect(navigation).not_to_be_visible()
+        page.get_by_role("button", name="Open navigation").click()
+    navigation.get_by_role("link", name="Overview", exact=True).click()
+    page.wait_for_load_state("load")
+    screenshot(page, "dashboard-" + name, full_page=False)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), (
         page.evaluate(
             """Array.from(document.querySelectorAll('body *')).filter(e =>
@@ -132,6 +152,10 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     page.get_by_label("Review", exact=True).select_option("not_affected")
     page.get_by_role("button", name="Filter", exact=True).click()
     expect(page.get_by_role("link", name="DEMO-WEB-001", exact=True)).to_have_count(1)
+    expect(page.locator(".review-ring strong")).to_have_text("1")
+    expect(page.locator('.severity-chart meter[aria-label="High candidates"]')).to_have_attribute(
+        "value", "4"
+    )
     menu = page.locator(".export-menu > summary")
     menu.focus()
     page.keyboard.press("Enter")

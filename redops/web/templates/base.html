@@ -12,15 +12,33 @@
 <body class="{% block body_class %}{% if session and session.authenticated %}workspace-page{% else %}auth-page{% endif %}{% endblock %}">
 <a class="skip" href="#main">Skip to content</a>
 {% if session and session.authenticated %}
+<aside class="sidebar" id="sidebar" aria-label="Workspace sidebar">
+  <a class="brand sidebar-brand" href="/ui" aria-label="RedOps home"><img class="brandmark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="64" height="64" alt=""></a>
+  <nav aria-label="Main navigation">
+    <p class="nav-label">Workspace</p>
+    <a class="navitem" href="/ui" {% if request.url.path == '/ui' %}aria-current="page"{% endif %}>{{ icon('history') }}<span>Assessments</span></a>
+    {% if document is defined %}
+    {% set assessment_url = '/ui/assessments/' ~ document.id %}
+    {% set section_url = '' if request.url.path == assessment_url else assessment_url %}
+    <p class="nav-label">Assessment</p>
+    <a class="navitem" href="{{ assessment_url }}" data-section="overview" {% if request.url.path == assessment_url %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Overview</span></a>
+    <a class="navitem" href="{{ section_url }}#inventory" data-section="inventory">{{ icon('server') }}<span>Inventory</span></a>
+    <a class="navitem" href="{{ section_url }}#findings" data-section="findings" {% if finding is defined %}aria-current="page"{% endif %}>{{ icon('shield') }}<span>Findings</span><span class="nav-count">{{ document.findings|length }}</span></a>
+    <a class="navitem" href="{{ section_url }}#reports" data-section="reports">{{ icon('file') }}<span>Reports</span></a>
+    {% endif %}
+  </nav>
+</aside>
 <header class="topbar">
-  <a class="brand" href="/ui" aria-label="RedOps home"><img class="brandmark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="52" height="52" alt=""></a>
-  <nav aria-label="Main navigation"><a class="navitem" href="/ui" {% if request.url.path == '/ui' %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Assessments</span></a></nav>
+  <button class="quiet icon-button nav-toggle" type="button" data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation">{{ icon('menu') }}</button>
+  <a class="brand mobile-brand" href="/ui" aria-label="RedOps home"><img class="brandmark" src="{{ url_for('ui_static', path='redops-mark.png') }}" width="40" height="40" alt=""></a>
+  <span class="breadcrumb">Workspace <span aria-hidden="true">/</span> <strong>{% if finding is defined %}Finding{% elif document is defined %}Assessment{% else %}Assessments{% endif %}</strong></span>
   <form action="/ui/logout" method="post" class="logout">
     <input type="hidden" name="csrf" value="{{ session.csrf }}">
     <span class="operator">{{ operator }}</span>
     <button class="quiet icon-button" type="submit" aria-label="Sign out" title="Sign out">{{ icon('logout') }}</button>
   </form>
 </header>
+<button class="nav-scrim" type="button" data-nav-close aria-label="Close navigation" tabindex="-1"></button>
 {% endif %}
 <div class="layout">
 <main id="main" class="main" tabindex="-1">{% block content %}{% endblock %}</main>

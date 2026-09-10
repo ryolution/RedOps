@@ -12,6 +12,11 @@ HTTP for its default loopback binding only. Existing databases can be browsed
 before migration; review forms explain when `redops database migrate` is needed.
 Back up the database before migrating; see [recovery instructions](database.md).
 
+The sidebar opens assessment history. Selecting an assessment adds **Overview**,
+**Inventory**, **Findings**, and **Reports** navigation for that assessment.
+On narrow screens, **Open navigation** reveals the sidebar; Escape, an outside
+click, or selecting a destination closes it. Navigation works by keyboard.
+
 The history page filters by exact engagement name. Select an assessment to search
 inventory, filter candidate findings by severity or latest review disposition,
 and inspect scope, input provenance, evidence and coverage limitations. Lists
@@ -24,17 +29,24 @@ Press Escape or click outside the menu to close it. **Assessment details** conta
 scope, provenance, and interpretation; a finding's **Technical details** contains
 matched CPEs, catalog source, and remediation.
 
+The severity and review-status charts always summarize **all candidates in the
+assessment**, including when tables are filtered or paginated. Candidates without
+a review, or with a latest `needs_review` disposition, count as needing review.
+Every other latest disposition counts as a recorded decision; that count is not
+a claim that a vulnerability has been fixed. Charts use the stored observations
+and latest review records, with no synthetic activity trends added by the UI.
+
 Controls have accessible labels, keyboard focus indicators, and a skip-to-content
 link. Tables can be focused and scrolled within their panels on narrow screens.
 The login card is centered in the viewport; the logo appears without a wordmark.
-The dark glass layout uses solid fallbacks for reduced transparency and browsers
-without blur support. CSS and JavaScript are
+The interface uses flat charcoal panels and restrained accents. CSS and JavaScript are
 packaged locally; browsing and report generation require no external assets.
 Dashboard writes are limited to finding reviews. Collection, imports, migration,
 backup and retention use the CLI.
 
 See the [desktop history](images/history-desktop.png),
-[mobile history](images/history-mobile.png), and [branding guide](branding.md) for
+[mobile history](images/history-mobile.png), [mobile sidebar](images/sidebar-mobile.png),
+and [branding guide](branding.md) for
 the current layout and design references.
 
 ## Sessions and deployment
