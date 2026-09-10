@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}RedOps{% endblock %}</title>
   <link rel="icon" type="image/png" href="{{ url_for('ui_static', path='redops-mark.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('ui_static', path='redops-mark.png') }}">
@@ -43,5 +43,13 @@
 <div class="layout">
 <main id="main" class="main" tabindex="-1">{% block content %}{% endblock %}</main>
 </div>
+{% if session and session.authenticated and document is defined %}
+<nav class="mobile-tabs" aria-label="Assessment navigation">
+  <a href="{{ section_url }}#overview" data-section="overview" {% if request.url.path == assessment_url %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Overview</span></a>
+  <a href="{{ section_url }}#inventory" data-section="inventory">{{ icon('server') }}<span>Inventory</span></a>
+  <a href="{{ section_url }}#findings" data-section="findings" {% if finding is defined %}aria-current="page"{% endif %}>{{ icon('shield') }}<span>Findings</span></a>
+  <a href="{{ section_url }}#reports" data-section="reports">{{ icon('file') }}<span>Reports</span></a>
+</nav>
+{% endif %}
 <div id="copy-status" role="status" class="toast" hidden></div>
 </body></html>

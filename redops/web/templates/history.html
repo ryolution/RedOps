@@ -1,16 +1,16 @@
-{% extends 'base.html' %}{% from 'macros.html' import pages %}
+{% extends 'base.html' %}{% from 'macros.html' import pages, timestamp %}
 {% block title %}Assessments · RedOps{% endblock %}
 {% block content %}
 <div class="page-heading"><h1>Assessments</h1></div>
-<section class="panel">
+<section class="panel record-panel history-panel">
 <form class="filters history-filter" method="get" action="/ui"><div class="field grow"><label class="visually-hidden" for="engagement">Engagement</label>
   <div class="search-input">{{ icon('search') }}<input id="engagement" name="engagement" maxlength="200" value="{{ engagement }}" placeholder="Engagement name"></div></div>
   <button type="submit">Filter</button>{% if engagement %}<a class="button secondary" href="/ui">Clear</a>{% endif %}
 </form>
 {% if records %}
-<div class="table-wrap" tabindex="0" role="region" aria-label="Assessment history table"><table><caption class="visually-hidden">Saved assessments</caption><thead><tr><th>Engagement</th><th>Recorded</th><th>Operator</th><th>Assessment</th></tr></thead>
-<tbody>{% for record in records %}<tr><td><a class="strong" href="/ui/assessments/{{ record.id }}">{{ record.engagement }}</a></td>
-<td><time>{{ record.created_at }}</time></td><td>{{ record.operator }}</td><td class="mono small">{{ record.id }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Assessment history table"><table class="record-table history-table" role="table"><caption class="visually-hidden">Saved assessments</caption><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Engagement</th><th scope="col" role="columnheader">Recorded</th><th scope="col" role="columnheader">Operator</th><th scope="col" role="columnheader">Assessment</th></tr></thead>
+<tbody role="rowgroup">{% for record in records %}<tr role="row"><td role="cell" class="record-title"><a class="strong record-link" href="/ui/assessments/{{ record.id }}">{{ record.engagement }}{{ icon('chevron') }}</a></td>
+<td role="cell" class="record-date"><span class="mobile-label" aria-hidden="true">Recorded</span>{{ timestamp(record.created_at) }}</td><td role="cell"><span class="mobile-label" aria-hidden="true">Operator</span>{{ record.operator }}</td><td role="cell" class="record-id mono small"><span class="mobile-label" aria-hidden="true">Assessment ID</span>{{ record.id }}</td></tr>{% endfor %}</tbody></table></div>
 {{ pages(pagination) }}
 {% else %}<div class="empty"><span class="empty-symbol" aria-hidden="true">□</span><h2>{% if engagement %}No matches{% else %}No assessments yet{% endif %}</h2>
 {% if engagement %}<p>No matching engagements.</p>{% else %}<p>Import an assessment with the CLI.</p>{% endif %}</div>{% endif %}

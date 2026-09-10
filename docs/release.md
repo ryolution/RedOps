@@ -91,11 +91,15 @@ bash scripts/check.sh
 ```
 
 Browser tests run against a disposable loopback server and synthetic assessments.
-They cover centered login, keyboard navigation/review, desktop and 390-pixel
+They cover centered login, keyboard navigation/review, desktop and 320/390/430-pixel
 layouts, local assets, filters, pagination, escaped imports, session expiry and
 all downloads through the export menu, including Escape and focus restoration.
 They also exercise the responsive sidebar and verify that assessment summary
 counts remain consistent after a review and when filtering the findings table.
+Mobile checks include bottom navigation, repeated report access, long imported
+values without horizontal scrolling, readable table semantics, and navigation
+and report downloads with JavaScript disabled. Screenshot fixtures include mobile
+history, inventory, findings, review, and the sidebar.
 The [desktop assessment](images/dashboard-desktop.png),
 [narrow assessment](images/dashboard-mobile.png),
 [desktop review](images/review-desktop.png) and

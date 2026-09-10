@@ -228,7 +228,7 @@ def test_inventory_and_finding_pagination(client, settings, document):
     root = f"/ui/assessments/{expanded['id']}"
     first = client.get(root).text
     second = client.get(root + "?inventory_page=2&findings_page=2").text
-    assert len(re.findall(r'<td class="mono">60\d\d/tcp</td>', first)) == 25
-    assert len(re.findall(r'<td class="mono">60\d\d/tcp</td>', second)) == 5
+    assert len(re.findall(r"<td\b[^>]*>60\d\d/tcp</td>", first)) == 25
+    assert len(re.findall(r"<td\b[^>]*>60\d\d/tcp</td>", second)) == 5
     assert len(re.findall(r"/findings/[a-f0-9]{64}", first)) == 25
     assert len(re.findall(r"/findings/[a-f0-9]{64}", second)) == 5

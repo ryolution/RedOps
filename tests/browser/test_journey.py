@@ -94,7 +94,8 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     page.set_viewport_size({"width": width, "height": 900})
     sign_in(page, origin, name)
     page.wait_for_load_state("load")
-    screenshot(page, "history-" + name)
+    page.evaluate("window.scrollTo(0, 0)")
+    screenshot(page, "history-" + name, full_page=width > 650)
     page.get_by_role("link", name=document["scope"]["engagement"], exact=True).focus()
     page.keyboard.press("Enter")
     expect(page.get_by_role("heading", name="Inventory", exact=True)).to_be_visible()
@@ -120,6 +121,12 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     navigation.get_by_role("link", name="Overview", exact=True).click()
     page.wait_for_load_state("load")
     screenshot(page, "dashboard-" + name, full_page=False)
+    if width < 651:
+        tabs = page.get_by_role("navigation", name="Assessment navigation")
+        for section in ("Inventory", "Findings"):
+            tabs.get_by_role("link", name=section, exact=True).click()
+            screenshot(page, section.lower() + "-" + name, full_page=False)
+        tabs.get_by_role("link", name="Overview", exact=True).click()
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), (
         page.evaluate(
             """Array.from(document.querySelectorAll('body *')).filter(e =>
@@ -147,7 +154,9 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
         .map(e => [e.tagName, e.className, e.getBoundingClientRect().right])"""
         )
     )
-    screenshot(page, "review-" + name)
+    if width < 651:
+        page.locator("#review").evaluate("e => e.scrollIntoView({block: 'start'})")
+    screenshot(page, "review-" + name, full_page=width > 650)
     page.locator("a.back").click()
     page.get_by_label("Review", exact=True).select_option("not_affected")
     page.get_by_role("button", name="Filter", exact=True).click()
@@ -182,6 +191,87 @@ def test_keyboard_browse_review_and_exports(page, server, width, name):
     expect(page.get_by_role("button", name="Sign in")).to_be_visible()
     assert not foreign and not errors
     assert page.evaluate("localStorage.length + sessionStorage.length") == 0
+
+
+@pytest.mark.parametrize("width", [320, 430])
+def test_mobile_cards_and_section_navigation(page, server, settings, width):
+    """Long imported values stay readable; thumb navigation reaches real sections."""
+    from copy import deepcopy
+
+    from playwright.sync_api import expect
+
+    origin, document, _ = server
+    expanded = deepcopy(document)
+    expanded["id"] = str(uuid4())
+    expanded["scope"]["engagement"] = "mobile-" + "assessment" * 12
+    expanded["hosts"][0]["hostname"] = "node-" + "a" * 150 + ".test"
+    expanded["hosts"][0]["os"] = "Operator supplied OS " * 8
+    expanded["hosts"][0]["services"][0]["product"] = "software" * 25
+    repository = Repository(settings.database_url)
+    try:
+        repository.save(expanded)
+    finally:
+        repository.close()
+    page.set_viewport_size({"width": width, "height": 740})
+    sign_in(page, origin)
+    page.wait_for_load_state("load")
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    root = origin + f"/ui/assessments/{expanded['id']}"
+    page.goto(root)
+    tabs = page.get_by_role("navigation", name="Assessment navigation")
+    expect(tabs).to_be_visible()
+    for link in tabs.get_by_role("link").all():
+        box = link.bounding_box()
+        assert box["width"] >= 44 and box["height"] >= 44
+    for label in ("Inventory", "Findings", "Overview"):
+        link = tabs.get_by_role("link", name=label, exact=True)
+        link.click()
+        expect(page).to_have_url(root + "#" + label.lower())
+        expect(link).to_have_attribute("aria-current", "location")
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        assert page.locator(".table-wrap").evaluate_all(
+            "items => items.every(e => e.scrollWidth <= e.clientWidth)"
+        )
+    expect(page.get_by_role("table", name="Recorded services")).to_have_count(1)
+    expect(page.get_by_role("columnheader", name="Port", exact=True)).to_have_count(1)
+    for _ in range(2):
+        tabs.get_by_role("link", name="Reports", exact=True).click()
+        expect(page.get_by_role("link", name="JSON", exact=True)).to_be_visible()
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        page.keyboard.press("Escape")
+        expect(page.locator("#reports > summary")).to_be_focused()
+        expect(page.get_by_role("link", name="JSON", exact=True)).not_to_be_visible()
+    tabs.get_by_role("link", name="Findings", exact=True).click()
+    page.get_by_role("link", name="DEMO-WEB-001", exact=True).first.click()
+    page.wait_for_load_state("load")
+    tabs.get_by_role("link", name="Reports", exact=True).click()
+    expect(page).to_have_url(root + "#reports")
+    expect(page.get_by_role("link", name="JSON", exact=True)).to_be_visible()
+
+
+def test_mobile_navigation_without_javascript(browser, server):
+    """Native links, review forms and report disclosure remain usable offline."""
+    from playwright.sync_api import expect
+
+    origin, document, _ = server
+    context = browser.new_context(java_script_enabled=False, viewport={"width": 390, "height": 844})
+    try:
+        page = context.new_page()
+        page.goto(origin + "/ui")
+        page.get_by_label("Workspace token").fill(TOKEN)
+        page.get_by_role("button", name="Sign in").click()
+        page.get_by_role("link", name=document["scope"]["engagement"], exact=True).click()
+        tabs = page.get_by_role("navigation", name="Assessment navigation")
+        tabs.get_by_role("link", name="Findings", exact=True).click()
+        page.get_by_role("link", name="DEMO-WEB-001", exact=True).first.click()
+        expect(page.get_by_role("button", name="Save review")).to_be_visible()
+        tabs.get_by_role("link", name="Reports", exact=True).click()
+        page.locator("#reports > summary").click()
+        with page.expect_download() as pending:
+            page.get_by_role("link", name="JSON", exact=True).click()
+        assert pending.value.failure() is None
+    finally:
+        context.close()
 
 
 def test_pagination_escaped_content_and_expired_session(page, server, settings):

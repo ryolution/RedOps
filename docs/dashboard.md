@@ -16,6 +16,10 @@ The sidebar opens assessment history. Selecting an assessment adds **Overview**,
 **Inventory**, **Findings**, and **Reports** navigation for that assessment.
 On narrow screens, **Open navigation** reveals the sidebar; Escape, an outside
 click, or selecting a destination closes it. Navigation works by keyboard.
+Assessment pages also have bottom **Overview**, **Inventory**, **Findings**, and
+**Reports** links within reach of a thumb. The active section is highlighted;
+**Reports** opens the export menu. The menu button opens the broader workspace
+navigation. The bottom bar reserves space for device safe areas and page content.
 
 The history page filters by exact engagement name. Select an assessment to search
 inventory, filter candidate findings by severity or latest review disposition,
@@ -37,7 +41,12 @@ a claim that a vulnerability has been fixed. Charts use the stored observations
 and latest review records, with no synthetic activity trends added by the UI.
 
 Controls have accessible labels, keyboard focus indicators, and a skip-to-content
-link. Tables can be focused and scrolled within their panels on narrow screens.
+link. On phones, history, inventory and findings display as spaced cards with
+wrapping values and their table semantics retained. Wider screens show tables.
+The same filters, pagination, and review data apply at every screen size.
+Mobile dates show UTC without changing their original stored timestamps.
+Without JavaScript, native navigation, forms, and the export disclosure still work;
+select **Export** after following **Reports** to open the download options.
 The login card is centered in the viewport; the logo appears without a wordmark.
 The interface uses flat charcoal panels and restrained accents. CSS and JavaScript are
 packaged locally; browsing and report generation require no external assets.
@@ -46,7 +55,8 @@ backup and retention use the CLI.
 
 See the [desktop history](images/history-desktop.png),
 [mobile history](images/history-mobile.png), [mobile sidebar](images/sidebar-mobile.png),
-and [branding guide](branding.md) for
+[mobile inventory](images/inventory-mobile.png),
+[mobile findings](images/findings-mobile.png), and [branding guide](branding.md) for
 the current layout and design references.
 
 ## Sessions and deployment

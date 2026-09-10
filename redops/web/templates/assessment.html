@@ -2,10 +2,10 @@
 {% block title %}{{ document.scope.engagement }} · RedOps{% endblock %}
 {% block content %}
 <a class="back" href="/ui">{{ icon('arrow') }} Assessments</a>
-<div class="page-heading" id="overview" tabindex="-1">
+<div class="page-heading assessment-heading" id="overview" tabindex="-1">
   <h1>{{ document.scope.engagement }}</h1>
   <details class="export-menu" id="reports">
-    <summary class="button">{{ icon('download') }} Export</summary>
+    <summary class="button">{{ icon('download') }} <span>Export</span></summary>
     <div class="export-options">
       <h2>Original</h2>
       <div class="downloads" aria-label="Original report downloads">{% for format in ['json','html','pdf'] %}<a class="button secondary" href="/ui/assessments/{{ document.id }}/report?format={{ format }}">{{ format|upper }}</a>{% endfor %}</div>
@@ -19,10 +19,10 @@
   </details>
 </div>
 <div class="metrics">
-  <section class="metric"><span>Hosts</span><strong>{{ document.hosts|length }}</strong></section>
-  <section class="metric"><span>Services</span><strong>{{ document.coverage.services_total }}</strong></section>
-  <section class="metric metric-accent"><span>Candidates</span><strong>{{ document.findings|length }}</strong></section>
-  <section class="metric"><span>CPE coverage</span><strong>{{ document.coverage.services_with_supported_cpe }}<small> / {{ document.coverage.services_total }}</small></strong></section>
+  <section class="metric"><span>{{ icon('server') }} Hosts</span><strong>{{ document.hosts|length }}</strong></section>
+  <section class="metric"><span>{{ icon('grid') }} Services</span><strong>{{ document.coverage.services_total }}</strong></section>
+  <section class="metric metric-accent"><span>{{ icon('shield') }} Candidates</span><strong>{{ document.findings|length }}</strong></section>
+  <section class="metric"><span>{{ icon('file') }} CPE coverage</span><strong>{{ document.coverage.services_with_supported_cpe }}<small> / {{ document.coverage.services_total }}</small></strong></section>
 </div>
 <div class="analytics">
   <section class="panel severity-chart" aria-labelledby="severity-title">
@@ -58,16 +58,16 @@
   <div class="field"><label for="disposition">Review</label><select id="disposition" name="disposition"><option value="">All decisions</option>{% for value, label in labels.items() %}<option value="{{ value }}" {% if disposition==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
   <button type="submit">{{ icon('filter') }} Filter</button><a class="button secondary" href="/ui/assessments/{{ document.id }}">Reset</a>
 </form>
-<section class="panel" id="inventory" tabindex="-1"><div class="section-heading"><h2>Inventory</h2><span class="count" aria-label="{{ inventory_total }} observations">{{ inventory_total }}</span></div>
-{% if inventory %}<div class="table-wrap" tabindex="0" role="region" aria-label="Inventory table"><table><caption class="visually-hidden">Recorded services</caption><thead><tr><th>Host</th><th>Port</th><th>Service / product</th><th>Version</th><th>OS</th></tr></thead><tbody>
-{% for row in inventory %}<tr><td><span class="mono">{{ row.host.ip }}</span><small class="block muted">{{ row.host.hostname }}</small></td>
-<td class="mono">{% if row.service %}{{ row.service.port.number }}/{{ row.service.port.protocol }}{% else %}—{% endif %}</td>
-<td>{% if row.service %}{{ row.service.name }}<small class="block muted">{{ row.service.product or 'Unknown product' }}</small>{% else %}No open services{% endif %}</td>
-<td>{{ row.service.version or 'Unknown' if row.service else '—' }}</td><td>{{ row.host.os or 'Unknown' }}</td></tr>{% endfor %}</tbody></table></div>
+<section class="panel record-panel" id="inventory" tabindex="-1"><div class="section-heading"><h2>Inventory</h2><span class="count" aria-label="{{ inventory_total }} observations">{{ inventory_total }}</span></div>
+{% if inventory %}<div class="table-wrap" tabindex="0" role="region" aria-label="Inventory table"><table class="record-table inventory-table" role="table"><caption class="visually-hidden">Recorded services</caption><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Host</th><th scope="col" role="columnheader">Port</th><th scope="col" role="columnheader">Service / product</th><th scope="col" role="columnheader">Version</th><th scope="col" role="columnheader">OS</th></tr></thead><tbody role="rowgroup">
+{% for row in inventory %}<tr role="row"><td role="cell" class="record-title"><span class="mono">{{ row.host.ip }}</span><small class="block muted">{{ row.host.hostname }}</small></td>
+<td role="cell" class="record-port mono">{% if row.service %}{{ row.service.port.number }}/{{ row.service.port.protocol }}{% else %}—{% endif %}</td>
+<td role="cell" class="record-product">{% if row.service %}{{ row.service.name }}<small class="block muted">{{ row.service.product or 'Unknown product' }}</small>{% else %}No open services{% endif %}</td>
+<td role="cell"><span class="mobile-label" aria-hidden="true">Version</span>{{ row.service.version or 'Unknown' if row.service else '—' }}</td><td role="cell"><span class="mobile-label" aria-hidden="true">OS</span>{{ row.host.os or 'Unknown' }}</td></tr>{% endfor %}</tbody></table></div>
 {{ pages(inventory_pager, 'Inventory pages') }}{% else %}<p class="empty">No matching inventory.</p>{% endif %}</section>
-<section class="panel" id="findings" tabindex="-1"><div class="section-heading"><h2>Candidate findings</h2><span class="count" aria-label="{{ findings_total }} candidates">{{ findings_total }}</span></div>
-{% if findings %}<div class="table-wrap" tabindex="0" role="region" aria-label="Findings table"><table><caption class="visually-hidden">Candidate findings and operator review</caption><thead><tr><th>Finding</th><th>Observation</th><th>Severity</th><th>Review</th></tr></thead><tbody>
-{% for finding in findings %}<tr><td><a class="strong" href="/ui/assessments/{{ document.id }}/findings/{{ finding.key }}">{{ finding.vulnerability_id }}</a></td><td class="mono">{{ finding.host }}:{{ finding.port }}/{{ finding.protocol }}</td>
-<td><span class="badge {{ finding.severity }}">{{ finding.severity|title }}</span></td><td>{{ labels[finding.review.disposition] if finding.review else 'Needs review' }}</td></tr>{% endfor %}</tbody></table></div>
+<section class="panel record-panel" id="findings" tabindex="-1"><div class="section-heading"><h2>Candidate findings</h2><span class="count" aria-label="{{ findings_total }} candidates">{{ findings_total }}</span></div>
+{% if findings %}<div class="table-wrap" tabindex="0" role="region" aria-label="Findings table"><table class="record-table findings-table" role="table"><caption class="visually-hidden">Candidate findings and operator review</caption><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Finding</th><th scope="col" role="columnheader">Observation</th><th scope="col" role="columnheader">Severity</th><th scope="col" role="columnheader">Review</th></tr></thead><tbody role="rowgroup">
+{% for finding in findings %}<tr role="row"><td role="cell" class="record-title"><a class="strong record-link" href="/ui/assessments/{{ document.id }}/findings/{{ finding.key }}">{{ finding.vulnerability_id }}{{ icon('chevron') }}</a></td><td role="cell" class="record-observation mono">{{ finding.host }}:{{ finding.port }}/{{ finding.protocol }}</td>
+<td role="cell"><span class="badge {{ finding.severity }}">{{ finding.severity|title }}</span></td><td role="cell" class="record-review">{{ labels[finding.review.disposition] if finding.review else 'Needs review' }}</td></tr>{% endfor %}</tbody></table></div>
 {{ pages(findings_pager, 'Finding pages') }}{% else %}<p class="empty">No matching candidates.</p>{% endif %}</section>
 {% endblock %}

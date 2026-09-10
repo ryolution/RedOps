@@ -1,4 +1,4 @@
-{% extends 'base.html' %}{% from 'macros.html' import pages %}
+{% extends 'base.html' %}{% from 'macros.html' import pages, timestamp %}
 {% block title %}{{ finding.vulnerability_id }} · RedOps{% endblock %}
 {% block content %}
 <a class="back" href="/ui/assessments/{{ document.id }}">{{ icon('arrow') }} {{ document.scope.engagement }}</a>
@@ -15,7 +15,7 @@
       <button class="quiet" type="button" data-copy="{{ finding.key }}">Copy finding key</button>
     </details>
   </section>
-  <section class="panel"><h2>Review</h2>
+  <section class="panel" id="review" tabindex="-1"><h2>Review</h2>
   {% if history.writable %}<form class="stack" method="post" action="/ui/assessments/{{ document.id }}/findings/{{ finding.key }}/reviews">
     <input type="hidden" name="csrf" value="{{ session.csrf }}"><input type="hidden" name="expected_previous" value="{{ history.latest_id }}">
     <label for="disposition">Disposition</label><select id="disposition" name="disposition">{% for value, label in labels.items() %}<option value="{{ value }}" {% if finding.review and finding.review.disposition==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
@@ -25,7 +25,7 @@
 </div>
 <section class="panel"><div class="section-heading"><h2>Review history</h2><span class="count">Revision {{ history.latest_id }}</span></div>
 {% for event in events %}<article class="review-event"><div class="section-heading"><strong>{{ labels[event.disposition] }}</strong><span class="muted small">#{{ event.id }}</span></div>
-<p class="review-notes">{{ event.notes or 'No notes' }}</p><p class="muted small">{{ event.operator }} · <time>{{ event.timestamp }}</time></p></article>
+<p class="review-notes">{{ event.notes or 'No notes' }}</p><p class="muted small review-attribution">{{ event.operator }} · {{ timestamp(event.timestamp) }}</p></article>
 {% else %}<p class="empty">No reviews yet.</p>{% endfor %}
 {{ pages(pagination, 'Review history pages') }}</section>
 {% endblock %}

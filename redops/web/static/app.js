@@ -3,6 +3,16 @@ const navigationToggle = document.querySelector("[data-nav-toggle]");
 const sidebar = document.getElementById("sidebar");
 const narrowScreen = window.matchMedia("(max-width: 850px)");
 
+// The exact imported timestamp stays available to assistive technology and in the title.
+const mobileDateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric", month: "short", year: "numeric",
+  hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short",
+});
+document.querySelectorAll("time[datetime] .mobile-time").forEach((label) => {
+  const date = new Date(label.closest("time").dateTime);
+  if (!Number.isNaN(date.getTime())) label.textContent = mobileDateFormat.format(date);
+});
+
 function closeNavigation(restoreFocus = false) {
   document.body.classList.remove("nav-open");
   navigationToggle?.setAttribute("aria-expanded", "false");
@@ -15,7 +25,7 @@ function revealSection() {
   if (!["overview", "inventory", "findings", "reports"].includes(section)) return;
   const target = document.getElementById(section);
   if (!target) return;
-  sidebar?.querySelectorAll("[data-section]").forEach((link) => {
+  document.querySelectorAll("[data-section]").forEach((link) => {
     if (link.dataset.section === section) link.setAttribute("aria-current", "location");
     else link.removeAttribute("aria-current");
   });
@@ -48,7 +58,7 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-nav-close]")) closeNavigation(true);
   const navigationLink = event.target.closest("a");
-  if (sidebar?.contains(event.target) && navigationLink) {
+  if (event.target.closest(".sidebar, .mobile-tabs") && navigationLink) {
     closeNavigation();
     if (navigationLink.hash && navigationLink.pathname === window.location.pathname) {
       event.preventDefault();

@@ -50,6 +50,27 @@ panels. RedOps uses its own CSS, icons, and assessment data. Reference artwork i
 not bundled or loaded by the application. System fonts and local assets keep
 the interface offline; reduced motion and forced colors are supported.
 
+### Mobile layout
+
+The mobile reference is [Unity Dashboard Kit by UI8 and Tran Mau Tri Tam](https://www.behance.net/gallery/104127497/Unity-Dashboard-Kit),
+with approximately **4.3K appreciations** when checked on September 10, 2026.
+Its mobile screens informed the generous inset spacing, grouped statistics, and
+separate cards for records. RedOps adapts these patterns to its own charcoal and
+crimson palette, with no reference artwork included.
+
+Phone layouts use 24-pixel page margins (20 pixels on the smallest screens),
+20–24-pixel card padding, rounded corners, and 48-pixel or larger form controls.
+Inventory, findings, and assessment history become stacked cards below 650 pixels;
+their underlying table headers and semantics remain available to assistive
+technology. Long imported values wrap instead of requiring horizontal scrolling.
+Mobile timestamps show a short UTC representation while preserving the exact
+timestamp for assistive technology and in the tooltip.
+
+Assessment pages include four bottom navigation links, with space reserved for
+the bar and device safe areas. Desktop navigation retains its sidebar. See the
+[mobile inventory](images/inventory-mobile.png) and
+[mobile findings](images/findings-mobile.png) for the record layout.
+
 ## Generation record
 
 Created using Codex's built-in image generation tool. The PNG is the generated
